@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anna's Learning Adventure 🐻</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #fff8f0;
+    --bg2:      #ffeedd;
+    --yellow:   #ffd166;
+    --orange:   #ff9a3c;
+    --pink:     #ff6b9d;
+    --mint:     #06d6a0;
+    --sky:      #4ecdc4;
+    --blue:     #45b7d1;
+    --purple:   #a855f7;
+    --red:      #ff6b6b;
+    --brown:    #8b5e3c;
+    --text:     #3d2b1f;
+    --muted:    #9b7b6a;
+    --white:    #ffffff;
+    --shadow:   rgba(61,43,31,.12);
+
+    --math-bg:    #fff3cd;
+    --math-acc:   #f59e0b;
+    --read-bg:    #fce7f3;
+    --read-acc:   #ec4899;
+    --sci-bg:     #d1fae5;
+    --sci-acc:    #10b981;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Polka-dot background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,154,60,.18) 2px, transparent 2px);
+    background-size: 36px 36px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Floating animals ── */
+  .floatie {
+    position: fixed; pointer-events: none; z-index: 1;
+    font-size: 2rem;
+    animation: wobble var(--fd,7s) ease-in-out infinite;
+    opacity: .55;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.1));
+  }
+  @keyframes wobble {
+    0%,100% { transform: translateY(0) rotate(-4deg) scale(1); }
+    50%      { transform: translateY(-14px) rotate(4deg) scale(1.06); }
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 10;
+    background: linear-gradient(135deg, #ff9a3c 0%, #ff6b9d 55%, #a855f7 100%);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(255,107,157,.35);
+  }
+
+  .logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.7rem;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,.2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-mascot { font-size: 2rem; animation: bounce-logo 2s ease-in-out infinite; }
+  @keyframes bounce-logo {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+  }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  #streak {
+    background: rgba(255,255,255,.25);
+    border: 2px solid rgba(255,255,255,.5);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: .95rem;
+    color: white;
+    backdrop-filter: blur(6px);
+  }
+
+  .grade-box {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.25);
+    border: 2px solid rgba(255,255,255,.45);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: .95rem;
+    color: white;
+  }
+  .grade-box select {
+    background: transparent; border: none;
+    color: white; font-family: 'Fredoka One', cursive;
+    font-size: .95rem; cursor: pointer; outline: none;
+  }
+  .grade-box select option { background: #ff9a3c; color: white; }
+
+  /* ── Subject tabs ── */
+  .subjects {
+    position: relative; z-index: 10;
+    display: flex; gap: 10px; padding: 12px 24px;
+    background: white;
+    border-bottom: 3px solid var(--bg2);
+    box-shadow: 0 2px 10px var(--shadow);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .subjects::-webkit-scrollbar { display: none; }
+
+  .pill {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 20px;
+    border-radius: 30px;
+    border: 2.5px solid transparent;
+    font-family: 'Fredoka One', cursive;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: all .22s cubic-bezier(.34,1.56,.64,1);
+    user-select: none;
+  }
+  .pill .animal { font-size: 1.2rem; }
+
+  .pill-math   { background: var(--math-bg); border-color: #fcd34d; color: #92400e; }
+  .pill-read   { background: var(--read-bg); border-color: #f9a8d4; color: #9d174d; }
+  .pill-sci    { background: var(--sci-bg);  border-color: #6ee7b7; color: #065f46; }
+
+  .pill-math.active,  .pill-math:hover  { background: var(--math-acc); border-color: var(--math-acc); color: white; transform: translateY(-3px) scale(1.04); box-shadow: 0 6px 18px rgba(245,158,11,.4); }
+  .pill-read.active,  .pill-read:hover  { background: var(--read-acc); border-color: var(--read-acc); color: white; transform: translateY(-3px) scale(1.04); box-shadow: 0 6px 18px rgba(236,72,153,.4); }
+  .pill-sci.active,   .pill-sci:hover   { background: var(--sci-acc);  border-color: var(--sci-acc);  color: white; transform: translateY(-3px) scale(1.04); box-shadow: 0 6px 18px rgba(16,185,129,.4); }
+
+  /* ── Chat ── */
+  #chat {
+    position: relative; z-index: 10;
+    flex: 1; overflow-y: auto;
+    padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #fcd34d transparent;
+  }
+  #chat::-webkit-scrollbar { width: 5px; }
+  #chat::-webkit-scrollbar-thumb { background: #fcd34d; border-radius: 10px; }
+
+  .bubble-wrap { display: flex; gap: 10px; align-items: flex-end; }
+  .bubble-wrap.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 3px 10px var(--shadow);
+    flex-shrink: 0;
+  }
+  .avatar.ai   { background: linear-gradient(135deg, #ffd166, #ff9a3c); border: 2px solid white; }
+  .avatar.user { background: linear-gradient(135deg, #45b7d1, #4ecdc4); border: 2px solid white; }
+
+  .bubble {
+    max-width: 72%;
+    padding: 14px 18px;
+    border-radius: 22px;
+    font-size: .97rem;
+    line-height: 1.65;
+    animation: popIn .3s cubic-bezier(.34,1.56,.64,1);
+    box-shadow: 0 3px 12px var(--shadow);
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(.82) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .bubble.ai {
+    background: white;
+    border: 2.5px solid var(--bg2);
+    border-bottom-left-radius: 5px;
+  }
+  .bubble.user {
+    background: linear-gradient(135deg, #45b7d1, #4ecdc4);
+    color: white;
+    border-bottom-right-radius: 5px;
+    text-align: right;
+  }
+
+  /* Subject colour strip at top of AI bubble */
+  .subj-strip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Fredoka One', cursive;
+    font-size: .78rem;
+    padding: 3px 11px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .strip-math { background: var(--math-bg); color: #92400e; }
+  .strip-read { background: var(--read-bg); color: #9d174d; }
+  .strip-sci  { background: var(--sci-bg);  color: #065f46; }
+  .strip-gen  { background: #ede9fe; color: #5b21b6; }
+
+  /* loading */
+  .dots { display: flex; gap: 5px; align-items: center; padding: 2px 0; }
+  .dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--orange);
+    animation: bounce .85s ease-in-out infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: .15s; background: var(--pink); }
+  .dots span:nth-child(3) { animation-delay: .3s;  background: var(--sky); }
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); }
+    40%          { transform: translateY(-9px); }
+  }
+
+  /* quick prompts */
+  .quick-prompts { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .qp {
+    padding: 7px 14px; border-radius: 20px;
+    font-family: 'Fredoka One', cursive; font-size: .82rem;
+    cursor: pointer; transition: all .2s;
+    border: 2px solid transparent;
+  }
+  .qp-math { background: var(--math-bg); color: #92400e; border-color: #fcd34d; }
+  .qp-read { background: var(--read-bg); color: #9d174d; border-color: #f9a8d4; }
+  .qp-sci  { background: var(--sci-bg);  color: #065f46; border-color: #6ee7b7; }
+  .qp-gen  { background: #ede9fe;        color: #5b21b6; border-color: #c4b5fd; }
+  .qp:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.05); box-shadow: 0 3px 10px var(--shadow); }
+
+  /* ── Input ── */
+  #input-area {
+    position: relative; z-index: 10;
+    padding: 14px 24px 18px;
+    background: white;
+    border-top: 3px solid var(--bg2);
+    display: flex; gap: 10px; align-items: flex-end;
+    box-shadow: 0 -3px 14px var(--shadow);
+  }
+  #user-input {
+    flex: 1;
+    background: var(--bg);
+    border: 2.5px solid #fcd34d;
+    border-radius: 20px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    padding: 12px 16px;
+    resize: none; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    line-height: 1.5;
+    max-height: 130px;
+    overflow-y: auto;
+  }
+  #user-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,154,60,.2); }
+  #user-input::placeholder { color: var(--muted); }
+
+  #send-btn {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff9a3c, #ff6b9d);
+    border: none; cursor: pointer; font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 4px 16px rgba(255,107,157,.45);
+    flex-shrink: 0;
+  }
+  #send-btn:hover  { transform: scale(1.12); box-shadow: 0 6px 22px rgba(255,107,157,.55); }
+  #send-btn:active { transform: scale(.95); }
+  #send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── Stars / confetti burst ── */
+  .confetti {
+    position: fixed; pointer-events: none; z-index: 999;
+    font-size: 1.5rem;
+    animation: burst .9s forwards;
+  }
+  @keyframes burst {
+    0%   { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.3); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 520px) {
+    .logo { font-size: 1.3rem; }
+    .logo-mascot { font-size: 1.6rem; }
+    header { padding: 10px 14px; }
+    .bubble { max-width: 86%; }
+    #chat, .subjects, #input-area { padding-left: 14px; padding-right: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating animals -->
+<div class="floatie" style="top:8%; left:2%; --fd:8s">🐼</div>
+<div class="floatie" style="top:30%; left:1%; --fd:11s; font-size:1.5rem">🌸</div>
+<div class="floatie" style="top:60%; left:3%; --fd:7s">🦊</div>
+<div class="floatie" style="top:82%; left:1.5%; --fd:9s; font-size:1.5rem">🌈</div>
+<div class="floatie" style="top:10%; right:2%; --fd:10s">🐨</div>
+<div class="floatie" style="top:42%; right:1%; --fd:6s; font-size:1.5rem">⭐</div>
+<div class="floatie" style="top:70%; right:2%; --fd:12s">🐰</div>
+<div class="floatie" style="top:88%; right:3%; --fd:8s; font-size:1.4rem">🍭</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <span class="logo-mascot">🐻</span>
+    Anna's Learning Adventure
+  </div>
+  <div class="header-right">
+    <div id="streak">🔥 <span id="streak-count">0</span> day streak</div>
+    <div class="grade-box">
+      📚
+      <select id="grade-select">
+        <option value="1">Grade 1</option>
+        <option value="2">Grade 2</option>
+        <option value="3" selected>Grade 3</option>
+        <option value="4">Grade 4</option>
+        <option value="5">Grade 5</option>
+        <option value="6">Grade 6</option>
+        <option value="7">Grade 7</option>
+        <option value="8">Grade 8</option>
+        <option value="9">Grade 9</option>
+        <option value="10">Grade 10</option>
+        <option value="11">Grade 11</option>
+        <option value="12">Grade 12</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<!-- Subject tabs -->
+<div class="subjects">
+  <div class="pill pill-math active" data-subject="Math">
+    <span class="animal">🐯</span> Math
+  </div>
+  <div class="pill pill-read" data-subject="Reading & Writing">
+    <span class="animal">🦉</span> Reading & Writing
+  </div>
+  <div class="pill pill-sci" data-subject="Science">
+    <span class="animal">🐸</span> Science
+  </div>
+</div>
+
+<!-- Chat -->
+<div id="chat"></div>
+
+<!-- Input -->
+<div id="input-area">
+  <textarea id="user-input" placeholder="Ask me anything, Anna! 🌟" rows="1"></textarea>
+  <button id="send-btn">🚀</button>
+</div>
+
+<script>
+// ── Streak ──────────────────────────────────────────
+let streak = parseInt(localStorage.getItem('anna_streak') || '0');
+const lastDate = localStorage.getItem('anna_date');
+const today = new Date().toDateString();
+const yesterday = new Date(Date.now() - 86400000).toDateString();
+if (lastDate !== today) {
+  streak = lastDate === yesterday ? streak + 1 : 1;
+  localStorage.setItem('anna_streak', streak);
+  localStorage.setItem('anna_date', today);
+}
+document.getElementById('streak-count').textContent = streak;
+
+// ── State ───────────────────────────────────────────
+let currentSubject = 'Math';
+let currentGrade = 3;
+const history = [];
+const chat = document.getElementById('chat');
+const input = document.getElementById('user-input');
+const sendBtn = document.getElementById('send-btn');
+
+// ── Subject meta ────────────────────────────────────
+const subjectMeta = {
+  'Math':              { emoji:'🐯', strip:'strip-math', qpClass:'qp-math', animal:'Tiger', color:'#f59e0b' },
+  'Reading & Writing': { emoji:'🦉', strip:'strip-read', qpClass:'qp-read', animal:'Owl',   color:'#ec4899' },
+  'Science':           { emoji:'🐸', strip:'strip-sci',  qpClass:'qp-sci',  animal:'Frog',  color:'#10b981' },
+};
+const quickPrompts = {
+  'Math':              ['Count with me! 🔢','What are times tables?','Help me add big numbers','What is subtraction?'],
+  'Reading & Writing': ['How do I write a story?','What is a sentence?','Help me spell a word','What are vowels?'],
+  'Science':           ['Why is the sky blue?','How do plants grow?','What are animals?','Tell me about space! 🚀'],
+};
+
+// ── Helpers ─────────────────────────────────────────
+function fmt(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+function appendBubble(role, htmlContent, subject) {
+  const meta = subject ? subjectMeta[subject] : null;
+  const wrap = document.createElement('div');
+  wrap.className = `bubble-wrap ${role}`;
+
+  const av = document.createElement('div');
+  av.className = `avatar ${role}`;
+  av.textContent = role === 'ai' ? (meta?.emoji || '🐻') : '🧒';
+
+  const bub = document.createElement('div');
+  bub.className = `bubble ${role}`;
+
+  if (role === 'ai' && meta) {
+    const strip = document.createElement('div');
+    strip.className = `subj-strip ${meta.strip}`;
+    strip.textContent = `${meta.emoji} ${subject}`;
+    bub.appendChild(strip);
+    bub.appendChild(document.createElement('br'));
+    bub.style.borderTop = `3px solid ${meta.color}33`;
+  }
+
+  const txt = document.createElement('div');
+  txt.innerHTML = htmlContent;
+  bub.appendChild(txt);
+
+  if (role === 'ai') { wrap.appendChild(av); wrap.appendChild(bub); }
+  else               { wrap.appendChild(bub); wrap.appendChild(av); }
+
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return bub;
+}
+
+function appendQPs(bub, subject) {
+  const meta = subjectMeta[subject];
+  const prompts = quickPrompts[subject] || [];
+  const container = document.createElement('div');
+  container.className = 'quick-prompts';
+  prompts.forEach(p => {
+    const btn = document.createElement('div');
+    btn.className = `qp ${meta.qpClass}`;
+    btn.textContent = p;
+    btn.onclick = () => { input.value = p; send(); };
+    container.appendChild(btn);
+  });
+  bub.appendChild(container);
+}
+
+function showLoading() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ai'; wrap.id = 'loading-wrap';
+  const av = document.createElement('div');
+  av.className = 'avatar ai';
+  av.textContent = subjectMeta[currentSubject]?.emoji || '🐻';
+  const bub = document.createElement('div');
+  bub.className = 'bubble ai';
+  bub.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  wrap.appendChild(av); wrap.appendChild(bub);
+  chat.appendChild(wrap); chat.scrollTop = chat.scrollHeight;
+}
+
+// ── Confetti burst ──────────────────────────────────
+function burst() {
+  const emojis = ['⭐','🌟','✨','🎉','🌸','🍭','🎈'];
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.cssText = `left:${40+Math.random()*20}%;top:${60+Math.random()*10}%;
+      --tx:${(Math.random()-0.5)*200}px;--ty:${-(50+Math.random()*120)}px;
+      animation-delay:${Math.random()*0.2}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+}
+
+// ── System prompt ───────────────────────────────────
+function buildSystem() {
+  const age = currentGrade + 5;
+  return `You are a super friendly, warm, and encouraging AI tutor for Anna, who is ${age} years old and in Grade ${currentGrade}. Your current subject is: ${currentSubject}.
+
+PERSONALITY:
+- Speak directly to Anna by name often 🐻
+- Use simple, cheerful, age-appropriate language for Grade ${currentGrade}
+- Be patient, enthusiastic, and celebrate every effort
+- Use cute animal analogies when helpful (owls for reading, tigers for math, frogs for science)
+- Use occasional emojis to keep things fun (but not overwhelming)
+- Never make Anna feel bad for getting something wrong — mistakes help us learn!
+
+TEACHING:
+- Break topics into tiny, manageable steps
+- For Math: show working step by step, use visual number examples
+- For Reading & Writing: explain with examples, help with story ideas
+- For Science: use simple, real-world examples Anna can relate to
+- Always end with encouragement and an optional follow-up question to keep curiosity alive
+
+SAFETY:
+- Keep all content fun and age-appropriate for a child
+- If asked anything unrelated to learning, gently redirect back to the subject
+
+FORMAT:
+- Use **bold** for key words
+- Keep paragraphs short and easy to read
+- Use numbered lists for steps
+- Be warm and enthusiastic!`;
+}
+
+// ── API ─────────────────────────────────────────────
+async function askClaude(msg) {
+  history.push({ role: 'user', content: msg });
+  showLoading();
+  sendBtn.disabled = true;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: buildSystem(),
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.map(b => b.text||'').join('') || "Oops! Let's try that again 🐻";
+    history.push({ role: 'assistant', content: reply });
+    document.getElementById('loading-wrap')?.remove();
+    appendBubble('ai', fmt(reply), currentSubject);
+    burst();
+  } catch {
+    document.getElementById('loading-wrap')?.remove();
+    appendBubble('ai', "Oops, something went wrong! Try again, Anna 🌸", currentSubject);
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// ── Send ─────────────────────────────────────────────
+async function send() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  input.style.height = 'auto';
+  appendBubble('user', msg);
+  await askClaude(msg);
+}
+
+sendBtn.onclick = send;
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+});
+
+// ── Pills ─────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => {
+      p.classList.remove('active');
+    });
+    pill.classList.add('active');
+    currentSubject = pill.dataset.subject;
+    showSubjectGreeting(currentSubject);
+  });
+});
+
+// ── Grade ─────────────────────────────────────────────
+document.getElementById('grade-select').addEventListener('change', e => {
+  currentGrade = parseInt(e.target.value);
+});
+
+// ── Subject greeting ───────────────────────────────────
+function showSubjectGreeting(subj) {
+  const meta = subjectMeta[subj];
+  const greetings = {
+    'Math':              `Hi Anna! 🐯 I'm your Math Tiger! Let's count, add, and explore numbers together. What would you like to learn?`,
+    'Reading & Writing': `Hello Anna! 🦉 I'm your Reading Owl! I love stories, words, and helping you become an amazing writer. What shall we explore?`,
+    'Science':           `Hey Anna! 🐸 I'm your Science Frog! The world is full of amazing things to discover. What are you curious about today?`,
+  };
+
+  const bub = appendBubble('ai', greetings[subj] || `Let's learn together, Anna!`, subj);
+  appendQPs(bub, subj);
+}
+
+// ── Welcome ───────────────────────────────────────────
+(function welcome() {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble-wrap ai';
+  const av = document.createElement('div');
+  av.className = 'avatar ai'; av.textContent = '🐻';
+  const bub = document.createElement('div');
+  bub.className = 'bubble ai';
+  bub.style.borderTop = '3px solid #fcd34d55';
+
+  const strip = document.createElement('div');
+  strip.className = 'subj-strip strip-gen';
+  strip.textContent = '👋 Welcome, Anna!';
+  bub.appendChild(strip);
+  bub.appendChild(document.createElement('br'));
+
+  const txt = document.createElement('div');
+  txt.innerHTML = `Hi <strong>Anna</strong>! 🎉 Welcome to your very own learning adventure!<br><br>
+I'm <strong>Buddy the Bear</strong> 🐻, and I'm here to help you learn amazing things every day!<br><br>
+🐯 <strong>Math Tiger</strong> — numbers, counting & problem solving<br>
+🦉 <strong>Reading Owl</strong> — stories, writing & words<br>
+🐸 <strong>Science Frog</strong> — nature, space & how things work<br><br>
+Pick a subject above to get started — or just ask me anything! 🌟`;
+  bub.appendChild(txt);
+
+  const qps = document.createElement('div');
+  qps.className = 'quick-prompts';
+  [
+    ['What can you teach me?','qp-gen'],
+    ['Give me a fun fact! 🌟','qp-gen'],
+    ['Quiz me on something!','qp-gen'],
+  ].forEach(([label, cls]) => {
+    const btn = document.createElement('div');
+    btn.className = `qp ${cls}`; btn.textContent = label;
+    btn.onclick = () => { input.value = label; send(); };
+    qps.appendChild(btn);
+  });
+  bub.appendChild(qps);
+
+  wrap.appendChild(av); wrap.appendChild(bub);
+  chat.appendChild(wrap);
+})();
+</script>
+</body>
+</html>
