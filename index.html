@@ -520,8 +520,8 @@
       📚
       <select id="grade-select">
         <option value="1">Grade 1</option>
-        <option value="2">Grade 2</option>
-        <option value="3" selected>Grade 3</option>
+        <option value="2" selected>Grade 2</option>
+        <option value="3">Grade 3</option>
         <option value="4">Grade 4</option>
         <option value="5">Grade 5</option>
         <option value="6">Grade 6</option>
@@ -634,7 +634,9 @@ document.getElementById('streak-count').textContent = streak;
 
 // ── State ───────────────────────────────────────────
 let currentSubject = 'Math';
-let currentGrade = 3;
+let currentGrade = parseInt(localStorage.getItem('anna_grade') || '2');
+// Set dropdown to saved grade
+document.getElementById('grade-select').value = currentGrade;
 const history = [];
 const chat = document.getElementById('chat');
 const input = document.getElementById('user-input');
@@ -849,6 +851,8 @@ document.querySelectorAll('.pill').forEach(pill => {
 // ── Grade ─────────────────────────────────────────────
 document.getElementById('grade-select').addEventListener('change', e => {
   currentGrade = parseInt(e.target.value);
+  localStorage.setItem('anna_grade', e.target.value);
+  history.length = 0; // clear history so grade change takes effect immediately
 });
 
 // ── Subject greeting ───────────────────────────────────
