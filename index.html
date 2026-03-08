@@ -518,15 +518,10 @@ toggleKey.addEventListener('click', () => {
 
 setupBtn.addEventListener('click', async () => {
   const key = apiKeyInput.value.trim();
-  if (!key.startsWith('sk-')) {
-    setupError.textContent = '⚠️ That doesn\'t look right — check your key and try again';
-    return;
-  }
+  if (!key) { setupError.textContent = 'Please enter your API key'; return; }
   setupBtn.disabled = true;
   setupBtn.textContent = '🔄 Checking key...';
   setupError.textContent = '';
-
-  // Quick validation call
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -537,19 +532,19 @@ setupBtn.addEventListener('click', async () => {
         messages: [{ role: 'user', content: 'Hi' }]
       })
     });
-    if (res.status === 401) {
-      setupError.textContent = '❌ Invalid key. Please check and try again.';
-      setupBtn.disabled = false; setupBtn.textContent = '🚀 Start Learning!';
-      return;
+    const data = await res.json();
+    if (res.ok) {
+      ANTHROPIC_API_KEY = key;
+      localStorage.setItem('anna_api_key', key);
+      hideSetup();
+    } else {
+      setupError.textContent = 'Error ' + res.status + ': ' + (data.error?.message || JSON.stringify(data));
     }
-    ANTHROPIC_API_KEY = key;
-    localStorage.setItem('anna_api_key', key);
-    hideSetup();
-    setupBtn.disabled = false; setupBtn.textContent = '🚀 Start Learning!';
-  } catch {
-    setupError.textContent = '⚠️ Could not connect. Check your internet and try again.';
-    setupBtn.disabled = false; setupBtn.textContent = '🚀 Start Learning!';
+  } catch(err) {
+    setupError.textContent = 'Network error: ' + err.message;
   }
+  setupBtn.disabled = false;
+  setupBtn.textContent = '🚀 Start Learning!';
 });
 
 changeKeyBtn.addEventListener('click', showSetup);
