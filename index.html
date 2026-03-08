@@ -518,8 +518,8 @@ toggleKey.addEventListener('click', () => {
 
 setupBtn.addEventListener('click', async () => {
   const key = apiKeyInput.value.trim();
-  if (!key.startsWith('sk-ant-')) {
-    setupError.textContent = '⚠️ That doesn\'t look right — keys start with sk-ant-';
+  if (!key.startsWith('sk-')) {
+    setupError.textContent = '⚠️ That doesn\'t look right — check your key and try again';
     return;
   }
   setupBtn.disabled = true;
