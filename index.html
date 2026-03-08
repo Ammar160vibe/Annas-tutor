@@ -866,7 +866,7 @@ function showSubjectGreeting(subj) {
 
 
 // ── Voice / TTS ──────────────────────────────────────
-let voiceEnabled = localStorage.getItem('anna_voice') !== 'off';
+let voiceEnabled = localStorage.getItem('anna_voice') === 'on';
 let selectedVoice = null;
 const voiceToggleBtn = document.getElementById('voice-toggle');
 
