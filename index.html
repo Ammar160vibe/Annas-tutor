@@ -282,6 +282,36 @@
   #send-btn:hover  { transform: scale(1.12); box-shadow: 0 6px 22px rgba(255,107,157,.55); }
   #send-btn:active { transform: scale(.95); }
   #send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  #mic-btn {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, #4ecdc4, #45b7d1);
+    border: none; cursor: pointer; font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s, box-shadow .2s;
+    box-shadow: 0 4px 16px rgba(69,183,209,.45);
+    flex-shrink: 0;
+  }
+  #mic-btn:hover { transform: scale(1.12); box-shadow: 0 6px 22px rgba(69,183,209,.55); }
+  #mic-btn.listening {
+    background: linear-gradient(135deg, #ff6b6b, #ff9a3c);
+    box-shadow: 0 4px 16px rgba(255,107,107,.55);
+    animation: pulse-mic 1s ease-in-out infinite;
+  }
+  @keyframes pulse-mic {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
+  }
+  #mic-btn:disabled { opacity: .5; cursor: not-allowed; animation: none; transform: none; }
+  #mic-status {
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: .82rem;
+    color: var(--muted);
+    padding: 2px 0 6px;
+    min-height: 20px;
+    transition: all .2s;
+  }
+  #mic-status.active { color: #ff6b6b; }
 
   /* ── Stars / confetti burst ── */
   .confetti {
@@ -391,6 +421,31 @@
     transition: background .2s;
   }
   #change-key-btn:hover { background: rgba(255,255,255,.35); }
+  #voice-toggle {
+    background: rgba(255,255,255,.25);
+    border: 2px solid rgba(255,255,255,.45);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-family: 'Fredoka One', cursive;
+    font-size: .9rem; color: white; cursor: pointer;
+    transition: background .2s;
+  }
+  #voice-toggle:hover { background: rgba(255,255,255,.35); }
+  #voice-toggle.muted { opacity: .5; }
+  .replay-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #fcd34d;
+    background: #fff8f0;
+    color: #92400e;
+    font-family: 'Fredoka One', cursive;
+    font-size: .75rem;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .replay-btn:hover { background: #fcd34d; }
 
   /* ── Responsive ── */
   @media (max-width: 520px) {
@@ -459,6 +514,7 @@
   </div>
   <div class="header-right">
     <div id="streak">🔥 <span id="streak-count">0</span> day streak</div>
+    <button id="voice-toggle" title="Toggle voice">🔊</button>
     <button id="change-key-btn" title="Change API Key">🔑 API Key</button>
     <div class="grade-box">
       📚
@@ -497,8 +553,10 @@
 <div id="chat"></div>
 
 <!-- Input -->
+<div id="mic-status"></div>
 <div id="input-area">
   <textarea id="user-input" placeholder="Ask me anything, Anna! 🌟" rows="1"></textarea>
+  <button id="mic-btn" title="Speak to Anna's Tutor">🎤</button>
   <button id="send-btn">🚀</button>
 </div>
 
@@ -682,32 +740,42 @@ function burst() {
 // ── System prompt ───────────────────────────────────
 function buildSystem() {
   const age = currentGrade + 5;
-  return `You are a super friendly, warm, and encouraging AI tutor for Anna, who is ${age} years old and in Grade ${currentGrade}. Your current subject is: ${currentSubject}.
 
-PERSONALITY:
-- Speak directly to Anna by name often 🐻
+  const subjectGuides = {
+    'Math': `You are the MATH TIGER 🐯 — Anna's dedicated Math tutor!
+ONLY teach Math topics. If Anna asks about anything else, warmly redirect her to Math.
+Topics for Grade ${currentGrade}: counting, addition, subtraction, multiplication, division, fractions, shapes, word problems, patterns, and times tables.
+Teaching style: Always show step-by-step working. Use number examples. Draw simple diagrams with text characters if helpful. Celebrate every correct answer!`,
+
+    'Reading & Writing': `You are the READING OWL 🦉 — Anna's dedicated Reading & Writing tutor!
+ONLY teach Reading and Writing topics. If Anna asks about anything else, warmly redirect her to Reading & Writing.
+Topics for Grade ${currentGrade}: reading comprehension, storytelling, sentences, paragraphs, spelling, punctuation, grammar, vocabulary, phonics, and creative writing.
+Teaching style: Use examples from fun stories. Help Anna build sentences. Give writing prompts. Praise her creativity and imagination!`,
+
+    'Science': `You are the SCIENCE FROG 🐸 — Anna's dedicated Science tutor!
+ONLY teach Science topics. If Anna asks about anything else, warmly redirect her to Science.
+Topics for Grade ${currentGrade}: animals, plants, the human body, weather, seasons, space, water cycle, food chains, habitats, forces, and simple experiments.
+Teaching style: Use real-world examples Anna can see around her. Ask curious questions. Make science feel magical and exciting!`
+  };
+
+  const guide = subjectGuides[currentSubject] || subjectGuides['Math'];
+
+  return `You are a super friendly, warm, and encouraging AI tutor for Anna, who is ${age} years old and in Grade ${currentGrade}.
+
+${guide}
+
+PERSONALITY (always):
+- Speak directly to Anna by name 
 - Use simple, cheerful, age-appropriate language for Grade ${currentGrade}
 - Be patient, enthusiastic, and celebrate every effort
-- Use cute animal analogies when helpful (owls for reading, tigers for math, frogs for science)
-- Use occasional emojis to keep things fun (but not overwhelming)
 - Never make Anna feel bad for getting something wrong — mistakes help us learn!
-
-TEACHING:
-- Break topics into tiny, manageable steps
-- For Math: show working step by step, use visual number examples
-- For Reading & Writing: explain with examples, help with story ideas
-- For Science: use simple, real-world examples Anna can relate to
-- Always end with encouragement and an optional follow-up question to keep curiosity alive
-
-SAFETY:
-- Keep all content fun and age-appropriate for a child
-- If asked anything unrelated to learning, gently redirect back to the subject
+- Use occasional emojis to keep things fun
 
 FORMAT:
 - Use **bold** for key words
 - Keep paragraphs short and easy to read
 - Use numbered lists for steps
-- Be warm and enthusiastic!`;
+- Always end with encouragement or a curious follow-up question`;
 }
 
 // ── API ─────────────────────────────────────────────
@@ -715,6 +783,7 @@ async function askClaude(msg) {
   history.push({ role: 'user', content: msg });
   showLoading();
   sendBtn.disabled = true;
+  if (micBtn) micBtn.disabled = true;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -731,7 +800,9 @@ async function askClaude(msg) {
     const reply = data.content?.map(b => b.text||'').join('') || "Oops! Let's try that again 🐻";
     history.push({ role: 'assistant', content: reply });
     document.getElementById('loading-wrap')?.remove();
-    appendBubble('ai', fmt(reply), currentSubject);
+    const aiBub = appendBubble('ai', fmt(reply), currentSubject);
+    addReplayBtn(aiBub, reply);
+    speak(reply);
     burst();
   } catch {
     document.getElementById('loading-wrap')?.remove();
@@ -739,6 +810,7 @@ async function askClaude(msg) {
   }
 
   sendBtn.disabled = false;
+  if (micBtn) micBtn.disabled = false;
   input.focus();
 }
 
@@ -769,6 +841,7 @@ document.querySelectorAll('.pill').forEach(pill => {
     });
     pill.classList.add('active');
     currentSubject = pill.dataset.subject;
+    history.length = 0; // clear history so new subject starts fresh
     showSubjectGreeting(currentSubject);
   });
 });
@@ -789,6 +862,141 @@ function showSubjectGreeting(subj) {
 
   const bub = appendBubble('ai', greetings[subj] || `Let's learn together, Anna!`, subj);
   appendQPs(bub, subj);
+}
+
+
+// ── Voice / TTS ──────────────────────────────────────
+let voiceEnabled = localStorage.getItem('anna_voice') !== 'off';
+let selectedVoice = null;
+const voiceToggleBtn = document.getElementById('voice-toggle');
+
+function updateVoiceBtn() {
+  voiceToggleBtn.textContent = voiceEnabled ? '🔊' : '🔇';
+  voiceToggleBtn.classList.toggle('muted', !voiceEnabled);
+}
+updateVoiceBtn();
+
+voiceToggleBtn.addEventListener('click', () => {
+  voiceEnabled = !voiceEnabled;
+  localStorage.setItem('anna_voice', voiceEnabled ? 'on' : 'off');
+  updateVoiceBtn();
+  if (!voiceEnabled) speechSynthesis.cancel();
+});
+
+function loadVoice() {
+  const voices = speechSynthesis.getVoices();
+  // Prefer a friendly female English voice
+  const preferred = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Fiona', 'Victoria'];
+  selectedVoice = voices.find(v => preferred.some(n => v.name.includes(n)) && v.lang.startsWith('en'))
+    || voices.find(v => v.lang.startsWith('en-') && v.name.toLowerCase().includes('female'))
+    || voices.find(v => v.lang.startsWith('en'))
+    || null;
+}
+loadVoice();
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = loadVoice;
+}
+
+function speak(text) {
+  if (!voiceEnabled) return;
+  speechSynthesis.cancel();
+  // Strip markdown bold/italic for cleaner speech
+  const clean = text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const chunks = clean.match(/[^.!?]+[.!?]*/g) || [clean];
+  let i = 0;
+  function speakNext() {
+    if (i >= chunks.length || !voiceEnabled) return;
+    const utt = new SpeechSynthesisUtterance(chunks[i++]);
+    utt.voice = selectedVoice;
+    utt.rate = 0.92;
+    utt.pitch = 1.1;
+    utt.volume = 1;
+    utt.onend = speakNext;
+    speechSynthesis.speak(utt);
+  }
+  speakNext();
+}
+
+function addReplayBtn(bub, text) {
+  const btn = document.createElement('button');
+  btn.className = 'replay-btn';
+  btn.innerHTML = '🔊 Replay';
+  btn.onclick = () => speak(text);
+  bub.appendChild(btn);
+}
+
+
+// ── Microphone / Speech Recognition ─────────────────
+const micBtn = document.getElementById('mic-btn');
+const micStatus = document.getElementById('mic-status');
+let recognition = null;
+let isListening = false;
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (!SpeechRecognition) {
+  micBtn.style.display = 'none'; // hide if not supported
+} else {
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.textContent = '⏹️';
+    micStatus.textContent = '🎤 Listening... speak now!';
+    micStatus.classList.add('active');
+    speechSynthesis.cancel(); // stop any speaking when mic starts
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(r => r[0].transcript).join('');
+    input.value = transcript;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+    if (e.results[e.results.length - 1].isFinal) {
+      micStatus.textContent = '✅ Got it! Sending...';
+      micStatus.classList.remove('active');
+      setTimeout(() => { micStatus.textContent = ''; send(); }, 400);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    micStatus.textContent = e.error === 'no-speech' 
+      ? '🤫 No speech heard — try again!' 
+      : `❌ Mic error: ${e.error}`;
+    micStatus.classList.remove('active');
+    stopListening();
+    setTimeout(() => micStatus.textContent = '', 2500);
+  };
+
+  recognition.onend = () => { stopListening(); };
+
+  function stopListening() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.textContent = '🎤';
+    if (micStatus.textContent === '🎤 Listening... speak now!') {
+      micStatus.textContent = '';
+    }
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (isListening) {
+      recognition.stop();
+    } else {
+      input.value = '';
+      recognition.start();
+    }
+  });
 }
 
 // ── Welcome ───────────────────────────────────────────
