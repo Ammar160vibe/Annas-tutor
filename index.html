@@ -447,6 +447,188 @@
   }
   .replay-btn:hover { background: #fcd34d; }
 
+  /* ── Quiz card ── */
+  .quiz-card {
+    background: linear-gradient(135deg, #fff9e6, #fff3cd);
+    border: 2.5px solid #fcd34d;
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-top: 10px;
+  }
+  .quiz-question {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: #92400e;
+    margin-bottom: 12px;
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-option {
+    background: white;
+    border: 2px solid #fcd34d;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+    color: #3d2b1f;
+  }
+  .quiz-option:hover:not(:disabled) {
+    background: #fef3c7;
+    transform: translateX(4px);
+    border-color: #f59e0b;
+  }
+  .quiz-option.correct {
+    background: #d1fae5;
+    border-color: #10b981;
+    color: #065f46;
+  }
+  .quiz-option.wrong {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #7f1d1d;
+  }
+  .quiz-feedback {
+    margin-top: 10px;
+    font-weight: 800;
+    font-size: 1rem;
+    text-align: center;
+  }
+  .quiz-feedback.right { color: #10b981; }
+  .quiz-feedback.wrong { color: #ef4444; }
+
+  /* ── Stars burst ── */
+  .star-burst {
+    position: fixed;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 9999;
+    animation: starFly 1.1s ease-out forwards;
+  }
+  @keyframes starFly {
+    0%   { transform: translate(0,0) scale(0.5); opacity:1; }
+    100% { transform: translate(var(--tx),var(--ty)) scale(1.3) rotate(30deg); opacity:0; }
+  }
+
+  /* ── Badges panel ── */
+  #badges-btn {
+    background: linear-gradient(135deg, #fcd34d, #f59e0b);
+    border: none;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    color: #7c2d12;
+    box-shadow: 0 2px 8px rgba(245,158,11,.4);
+    transition: transform 0.15s;
+  }
+  #badges-btn:hover { transform: scale(1.07); }
+
+  #badges-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  #badges-overlay.open { display: flex; }
+
+  .badges-modal {
+    background: linear-gradient(160deg, #fff8f0, #fff3e0);
+    border-radius: 28px;
+    padding: 28px 24px;
+    width: min(90vw, 420px);
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .badges-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: #92400e;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .badges-subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #9b7b6a;
+    margin-bottom: 20px;
+  }
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 6px;
+    border-radius: 16px;
+    background: white;
+    border: 2px solid #fde68a;
+    text-align: center;
+    transition: transform 0.15s;
+  }
+  .badge-item.earned {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-color: #f59e0b;
+    box-shadow: 0 3px 10px rgba(245,158,11,.25);
+  }
+  .badge-item.locked {
+    filter: grayscale(1);
+    opacity: 0.45;
+  }
+  .badge-icon { font-size: 2.2rem; line-height: 1; }
+  .badge-name {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #92400e;
+    line-height: 1.2;
+  }
+  .badge-item.locked .badge-name { color: #9b7b6a; }
+  .badges-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #9b7b6a;
+  }
+  .new-badge-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #fcd34d, #f59e0b);
+    color: #7c2d12;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 12px 22px;
+    border-radius: 30px;
+    box-shadow: 0 6px 20px rgba(245,158,11,.5);
+    z-index: 2000;
+    opacity: 0;
+    transition: all 0.4s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .new-badge-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
   /* ── Responsive ── */
   @media (max-width: 520px) {
     .logo { font-size: 1.3rem; }
@@ -514,6 +696,7 @@
   </div>
   <div class="header-right">
     <div id="streak">🔥 <span id="streak-count">0</span> day streak</div>
+    <button id="badges-btn">🏅 Badges</button>
     <button id="voice-toggle" title="Toggle voice">🔊</button>
     <button id="change-key-btn" title="Change API Key">🔑 API Key</button>
     <div class="grade-box">
@@ -548,6 +731,17 @@
     <span class="animal">🐸</span> Science
   </div>
 </div>
+
+<!-- Badges Overlay -->
+<div id="badges-overlay">
+  <div class="badges-modal">
+    <button class="badges-close" id="badges-close">✕</button>
+    <div class="badges-title">🏅 Anna's Badges</div>
+    <div class="badges-subtitle" id="badges-subtitle">...</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+</div>
+<div class="new-badge-toast" id="badge-toast"></div>
 
 <!-- Chat -->
 <div id="chat"></div>
@@ -787,6 +981,15 @@ async function askClaude(msg) {
   sendBtn.disabled = true;
   if (micBtn) micBtn.disabled = true;
 
+  // Track chat counts for badges
+  chatCounts[currentSubject] = (chatCounts[currentSubject] || 0) + 1;
+  chatCounts.total = (chatCounts.total || 0) + 1;
+  saveChatCounts();
+  checkBadges();
+
+  // Build system prompt — add quiz instructions if quiz mode on
+  const system = buildSystem() + (quizActive ? '\n\n' + buildQuizPrompt() : '');
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -794,17 +997,23 @@ async function askClaude(msg) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: buildSystem(),
+        system,
         messages: history
       })
     });
     const data = await res.json();
-    const reply = data.content?.map(b => b.text||'').join('') || "Oops! Let's try that again 🐻";
-    history.push({ role: 'assistant', content: reply });
+    const rawReply = data.content?.map(b => b.text||'').join('') || "Oops! Let's try that again 🐻";
+
+    // Strip quiz block from displayed text
+    const displayReply = quizActive ? stripQuizBlock(rawReply) : rawReply;
+    const quiz = quizActive ? parseQuiz(rawReply) : null;
+
+    history.push({ role: 'assistant', content: rawReply });
     document.getElementById('loading-wrap')?.remove();
-    const aiBub = appendBubble('ai', fmt(reply), currentSubject);
-    addReplayBtn(aiBub, reply);
-    speak(reply);
+    const aiBub = appendBubble('ai', fmt(displayReply), currentSubject);
+    addReplayBtn(aiBub, displayReply);
+    if (quiz) renderQuiz(quiz, aiBub);
+    speak(displayReply);
     burst();
   } catch {
     document.getElementById('loading-wrap')?.remove();
@@ -1012,6 +1221,219 @@ if (!SpeechRecognition) {
     }
   });
 }
+
+// ── Badge System ─────────────────────────────────────
+const ALL_BADGES = [
+  { id: 'first_chat',   icon: '🌟', name: 'First Question!',   desc: 'Asked your first question' },
+  { id: 'math_5',       icon: '🐯', name: 'Math Cub',          desc: 'Had 5 Math chats' },
+  { id: 'read_5',       icon: '🦉', name: 'Bookworm',          desc: 'Had 5 Reading chats' },
+  { id: 'sci_5',        icon: '🐸', name: 'Explorer',          desc: 'Had 5 Science chats' },
+  { id: 'all_subjects', icon: '🌈', name: 'All-Rounder',       desc: 'Used all 3 subjects' },
+  { id: 'streak_3',     icon: '🔥', name: '3-Day Streak',      desc: 'Learned 3 days in a row' },
+  { id: 'streak_7',     icon: '💫', name: 'Super Learner',     desc: 'Learned 7 days in a row' },
+  { id: 'quiz_first',   icon: '❓', name: 'Quiz Starter',      desc: 'Tried your first quiz' },
+  { id: 'quiz_correct', icon: '✅', name: 'Quiz Whiz',         desc: 'Got a quiz question right' },
+  { id: 'quiz_5',       icon: '🏆', name: 'Quiz Champion',     desc: 'Got 5 quiz questions right' },
+  { id: 'chats_20',     icon: '💬', name: 'Chatterbox',        desc: 'Sent 20 messages' },
+  { id: 'chats_50',     icon: '🎓', name: 'Scholar',           desc: 'Sent 50 messages' },
+];
+
+let earnedBadges = JSON.parse(localStorage.getItem('anna_badges') || '[]');
+let chatCounts = JSON.parse(localStorage.getItem('anna_chat_counts') || '{"Math":0,"Reading & Writing":0,"Science":0,"total":0}');
+let quizCorrect = parseInt(localStorage.getItem('anna_quiz_correct') || '0');
+
+function saveBadges() { localStorage.setItem('anna_badges', JSON.stringify(earnedBadges)); }
+function saveChatCounts() { localStorage.setItem('anna_chat_counts', JSON.stringify(chatCounts)); }
+function saveQuizCorrect() { localStorage.setItem('anna_quiz_correct', quizCorrect.toString()); }
+
+function awardBadge(id) {
+  if (earnedBadges.includes(id)) return;
+  const badge = ALL_BADGES.find(b => b.id === id);
+  if (!badge) return;
+  earnedBadges.push(id);
+  saveBadges();
+  showBadgeToast(badge);
+  starBurst();
+}
+
+function showBadgeToast(badge) {
+  const toast = document.getElementById('badge-toast');
+  toast.textContent = `${badge.icon} New Badge: ${badge.name}!`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function checkBadges() {
+  if (chatCounts.total >= 1) awardBadge('first_chat');
+  if (chatCounts['Math'] >= 5) awardBadge('math_5');
+  if (chatCounts['Reading & Writing'] >= 5) awardBadge('read_5');
+  if (chatCounts['Science'] >= 5) awardBadge('sci_5');
+  if (chatCounts['Math'] > 0 && chatCounts['Reading & Writing'] > 0 && chatCounts['Science'] > 0) awardBadge('all_subjects');
+  if (streak >= 3) awardBadge('streak_3');
+  if (streak >= 7) awardBadge('streak_7');
+  if (quizCorrect >= 1) awardBadge('quiz_correct');
+  if (quizCorrect >= 5) awardBadge('quiz_5');
+  if (chatCounts.total >= 20) awardBadge('chats_20');
+  if (chatCounts.total >= 50) awardBadge('chats_50');
+}
+
+function renderBadgesModal() {
+  const grid = document.getElementById('badges-grid');
+  const sub = document.getElementById('badges-subtitle');
+  sub.textContent = `${earnedBadges.length} of ${ALL_BADGES.length} badges earned 🎉`;
+  grid.innerHTML = '';
+  ALL_BADGES.forEach(b => {
+    const div = document.createElement('div');
+    const earned = earnedBadges.includes(b.id);
+    div.className = `badge-item ${earned ? 'earned' : 'locked'}`;
+    div.innerHTML = `<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div>`;
+    div.title = earned ? b.desc : '???';
+    grid.appendChild(div);
+  });
+}
+
+document.getElementById('badges-btn').addEventListener('click', () => {
+  renderBadgesModal();
+  document.getElementById('badges-overlay').classList.add('open');
+});
+document.getElementById('badges-close').addEventListener('click', () => {
+  document.getElementById('badges-overlay').classList.remove('open');
+});
+document.getElementById('badges-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('badges-overlay'))
+    document.getElementById('badges-overlay').classList.remove('open');
+});
+
+// ── Star Burst (for correct answers) ─────────────────
+function starBurst(x, y) {
+  const cx = x || window.innerWidth / 2;
+  const cy = y || window.innerHeight / 2;
+  const emojis = ['⭐','🌟','✨','🎊','💛','🌸'];
+  for (let i = 0; i < 10; i++) {
+    const el = document.createElement('div');
+    el.className = 'star-burst';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    const angle = (Math.PI * 2 * i) / 10;
+    const dist = 80 + Math.random() * 80;
+    el.style.cssText = `left:${cx}px;top:${cy}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;animation-delay:${Math.random()*0.15}s`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+}
+
+// ── Quiz System ───────────────────────────────────────
+let quizActive = false;
+
+function buildQuizPrompt() {
+  return `After your explanation, generate a short multiple-choice quiz question to check Anna's understanding.
+
+Format it EXACTLY like this (keep the QUIZ block at the end of your response):
+
+[QUIZ]
+Q: <one clear question>
+A: <correct answer>
+B: <wrong answer>
+C: <wrong answer>
+D: <wrong answer>
+CORRECT: A
+[/QUIZ]
+
+Make the question fun and age-appropriate for Grade ${currentGrade}. The correct answer should be option A, but present options in a random-feeling order in your text.`;
+}
+
+function parseQuiz(text) {
+  const match = text.match(/\[QUIZ\]([\s\S]*?)\[\/QUIZ\]/);
+  if (!match) return null;
+  const block = match[1];
+  const q = (block.match(/Q:\s*(.+)/) || [])[1]?.trim();
+  const a = (block.match(/A:\s*(.+)/) || [])[1]?.trim();
+  const b = (block.match(/B:\s*(.+)/) || [])[1]?.trim();
+  const c = (block.match(/C:\s*(.+)/) || [])[1]?.trim();
+  const d = (block.match(/D:\s*(.+)/) || [])[1]?.trim();
+  const correct = (block.match(/CORRECT:\s*(\w)/) || [])[1]?.trim();
+  if (!q || !a || !b || !correct) return null;
+  const opts = [{letter:'A',text:a},{letter:'B',text:b},{letter:'C',text:c},{letter:'D',text:d}].filter(o=>o.text);
+  // Shuffle options but track which is correct
+  const correctText = opts.find(o => o.letter === correct)?.text;
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { question: q, options: opts, correctText };
+}
+
+function stripQuizBlock(text) {
+  return text.replace(/\[QUIZ\][\s\S]*?\[\/QUIZ\]/g, '').trim();
+}
+
+function renderQuiz(quiz, bub) {
+  awardBadge('quiz_first');
+  const card = document.createElement('div');
+  card.className = 'quiz-card';
+  const qEl = document.createElement('div');
+  qEl.className = 'quiz-question';
+  qEl.textContent = '❓ ' + quiz.question;
+  card.appendChild(qEl);
+
+  const optsEl = document.createElement('div');
+  optsEl.className = 'quiz-options';
+
+  quiz.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt.text;
+    btn.addEventListener('click', (e) => {
+      // Disable all options
+      optsEl.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+      const isCorrect = opt.text === quiz.correctText;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      if (!isCorrect) {
+        // highlight correct
+        optsEl.querySelectorAll('.quiz-option').forEach(b => {
+          if (b.textContent === quiz.correctText) b.classList.add('correct');
+        });
+      }
+      const fb = document.createElement('div');
+      fb.className = `quiz-feedback ${isCorrect ? 'right' : 'wrong'}`;
+      if (isCorrect) {
+        fb.textContent = ['🎉 Amazing, that\'s right!', '⭐ Brilliant, Anna!', '🌟 You got it!', '🏆 Correct! Great job!'][Math.floor(Math.random()*4)];
+        quizCorrect++;
+        saveQuizCorrect();
+        checkBadges();
+        starBurst(e.clientX, e.clientY);
+        burst();
+      } else {
+        fb.textContent = `Not quite — the answer was "${quiz.correctText}". Keep going! 💪`;
+      }
+      card.appendChild(fb);
+      chat.scrollTop = chat.scrollHeight;
+    });
+    optsEl.appendChild(btn);
+  });
+
+  card.appendChild(optsEl);
+  bub.appendChild(card);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ── Quiz toggle in subject bar ────────────────────────
+// Add quiz toggle button dynamically
+const quizToggleWrap = document.createElement('div');
+quizToggleWrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 16px 8px;';
+quizToggleWrap.innerHTML = `
+  <label style="display:flex;align-items:center;gap:6px;font-weight:800;font-size:0.82rem;color:#92400e;cursor:pointer;">
+    <input type="checkbox" id="quiz-toggle" style="width:16px;height:16px;accent-color:#f59e0b;cursor:pointer;">
+    ❓ Quiz mode — test me after each answer!
+  </label>`;
+document.querySelector('.subjects').after(quizToggleWrap);
+
+const quizToggle = document.getElementById('quiz-toggle');
+quizToggle.checked = localStorage.getItem('anna_quiz') === 'on';
+quizToggle.addEventListener('change', () => {
+  quizActive = quizToggle.checked;
+  localStorage.setItem('anna_quiz', quizActive ? 'on' : 'off');
+});
+quizActive = quizToggle.checked;
 
 // ── Welcome ───────────────────────────────────────────
 (function welcome() {
