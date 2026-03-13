@@ -757,31 +757,101 @@
     50%      { box-shadow: 0 6px 28px rgba(168,85,247,.7); }
   }
 
-  /* ── Lesson chat view ── */
+  /* ── Lesson chat view — side-panel layout ── */
   #lesson-chat {
     display: none;
     flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px 12px;
-    flex-direction: column;
-    gap: 14px;
+    overflow: hidden;
+    flex-direction: row;
+    gap: 0;
     position: relative; z-index: 10;
-    scrollbar-width: thin;
-    scrollbar-color: #fcd34d transparent;
   }
   #lesson-chat.visible { display: flex; }
 
-  .lesson-chat-nav {
-    display: flex; align-items: center; gap: 10px;
+  /* Character panel — left side */
+  #tutor-panel {
+    width: 180px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 14px 10px 14px;
+    background: linear-gradient(180deg, #fff8f0 0%, #fef3c7 100%);
+    border-right: 2px solid #fde68a;
+    gap: 10px;
+  }
+
+  /* SVG character face */
+  .tutor-face-wrap {
+    position: relative;
+    width: 120px; height: 120px;
+    flex-shrink: 0;
+  }
+  .tutor-face-wrap svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,.15));
+  }
+  .tutor-name-tag {
+    font-family: 'Fredoka One', cursive;
+    font-size: .85rem;
+    color: #92400e;
+    text-align: center;
+    background: white;
+    border: 2px solid #fde68a;
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  .tutor-speech-indicator {
+    display: flex; gap: 4px; align-items: center;
+    height: 20px;
+  }
+  .tutor-speech-indicator span {
+    width: 5px; border-radius: 3px;
+    background: #f59e0b;
+    animation: voiceBar 0.6s ease-in-out infinite alternate;
+  }
+  .tutor-speech-indicator span:nth-child(1) { height: 8px;  animation-delay: 0s; }
+  .tutor-speech-indicator span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .tutor-speech-indicator span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .tutor-speech-indicator span:nth-child(4) { height: 16px; animation-delay: 0.15s; }
+  .tutor-speech-indicator span:nth-child(5) { height: 8px;  animation-delay: 0.05s; }
+  .tutor-speech-indicator.hidden { visibility: hidden; }
+  @keyframes voiceBar {
+    from { transform: scaleY(0.4); opacity: .6; }
+    to   { transform: scaleY(1.2); opacity: 1; }
+  }
+  .tutor-status {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #9b7b6a;
+    text-align: center;
+    min-height: 16px;
+  }
+
+  /* Lesson content panel — right side */
+  #lesson-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .lesson-chat-nav {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 14px 8px;
+    border-bottom: 2px solid var(--bg2);
+    background: white;
   }
   .back-btn {
     background: white;
     border: 2px solid #fcd34d;
     border-radius: 16px;
-    padding: 7px 14px;
+    padding: 6px 12px;
     font-family: 'Fredoka One', cursive;
-    font-size: .85rem;
+    font-size: .82rem;
     color: #92400e;
     cursor: pointer;
     transition: all .2s;
@@ -790,20 +860,23 @@
   .back-btn:hover { background: #fef3c7; }
   .lesson-chat-title {
     font-family: 'Fredoka One', cursive;
-    font-size: .95rem;
+    font-size: .88rem;
     color: var(--text);
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .lesson-done-btn {
     background: linear-gradient(135deg, #10b981, #06d6a0);
     color: white;
     border: none;
-    border-radius: 16px;
-    padding: 8px 16px;
+    border-radius: 14px;
+    padding: 7px 14px;
     font-family: 'Fredoka One', cursive;
-    font-size: .85rem;
+    font-size: .82rem;
     cursor: pointer;
-    box-shadow: 0 3px 12px rgba(16,185,129,.4);
+    box-shadow: 0 3px 10px rgba(16,185,129,.4);
     transition: all .2s;
     flex-shrink: 0;
   }
@@ -951,22 +1024,54 @@
   <div class="setup-card">
     <div class="setup-bear">🐻</div>
     <div class="setup-title">Welcome to Anna's Tutor!</div>
-    <p class="setup-subtitle">A one-time setup is needed. You'll need a <strong>Claude API key</strong> — Anna never needs to do this!</p>
+    <p class="setup-subtitle">One-time setup — Anna never needs to do this!</p>
 
     <div class="setup-steps">
-      1. Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
-      2. Sign up / log in to your account<br>
-      3. Click <strong>API Keys → Create Key</strong><br>
-      4. Copy the key and paste it below
+      <strong>Step 1 — Claude API key (required)</strong><br>
+      Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key
     </div>
-
     <div class="setup-input-wrap">
       <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false" />
       <button id="toggle-key" title="Show/hide key">👁️</button>
     </div>
+
+    <div class="setup-steps" style="margin-top:10px;">
+      <strong>Step 2 — ElevenLabs voice key (optional but recommended 🎙️)</strong><br>
+      Go to <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> → Profile → API Key<br>
+      <span style="font-size:.82rem;color:#9b7b6a;">Free tier available · Gives Anna a natural speaking voice</span>
+    </div>
+    <div class="setup-input-wrap">
+      <input type="password" id="el-key-input" placeholder="ElevenLabs API key (optional)..." autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button id="toggle-el-key" title="Show/hide key">👁️</button>
+    </div>
+
     <div id="setup-error"></div>
     <button id="setup-btn">🚀 Start Learning!</button>
-    <p class="setup-note">🔒 Your key is saved only on this device and never shared with anyone. You only need to do this once!</p>
+    <p class="setup-note">🔒 Keys are saved only on this device and never shared. You only need to do this once!</p>
+  </div>
+</div>
+
+<!-- Settings overlay (for changing keys later) -->
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1001;justify-content:center;align-items:center;padding:24px;">
+  <div class="setup-card" style="max-width:400px;">
+    <div style="font-family:Fredoka One,cursive;font-size:1.4rem;color:#92400e;margin-bottom:16px;">⚙️ Settings</div>
+    <div style="font-weight:800;font-size:.85rem;margin-bottom:6px;text-align:left;">Claude API Key</div>
+    <div class="setup-input-wrap">
+      <input type="password" id="settings-api-key" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button id="toggle-settings-key">👁️</button>
+    </div>
+    <div style="font-weight:800;font-size:.85rem;margin:10px 0 6px;text-align:left;">ElevenLabs API Key <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
+    <div class="setup-input-wrap">
+      <input type="password" id="settings-el-key" placeholder="ElevenLabs key..." autocomplete="off" autocorrect="off" spellcheck="false" />
+      <button id="toggle-settings-el">👁️</button>
+    </div>
+    <div style="font-weight:800;font-size:.85rem;margin:10px 0 6px;text-align:left;">ElevenLabs Voice ID <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
+    <input id="settings-voice-id" type="text" placeholder="e.g. EXAVITQu4vr4xnSDxMaL (default: Charlotte)" style="width:100%;background:#fff8f0;border:2px solid #fcd34d;border-radius:12px;padding:10px 14px;font-size:.88rem;outline:none;margin-bottom:10px;" autocomplete="off" />
+    <div id="settings-error" style="color:#ef4444;font-size:.8rem;min-height:16px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button id="settings-save" style="flex:1;padding:12px;border-radius:14px;border:none;cursor:pointer;background:linear-gradient(135deg,#ff9a3c,#ff6b9d);color:white;font-family:Fredoka One,cursive;font-size:1rem;">💾 Save</button>
+      <button id="settings-cancel" style="flex:1;padding:12px;border-radius:14px;border:2px solid #fcd34d;background:white;cursor:pointer;font-family:Fredoka One,cursive;font-size:1rem;color:#92400e;">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -990,7 +1095,7 @@
     <div id="streak">🔥 <span id="streak-count">0</span> day streak</div>
     <button id="badges-btn">🏅 Badges</button>
     <button id="voice-toggle" title="Toggle voice">🔊</button>
-    <button id="change-key-btn" title="Change API Key">🔑 API Key</button>
+    <button id="change-key-btn" title="Settings">⚙️ Settings</button>
     <div class="grade-box">
       📚
       <select id="grade-select">
@@ -1048,7 +1153,21 @@
 
 <!-- Individual lesson chat panel -->
 <div id="lesson-chat">
-  <!-- populated by JS -->
+  <!-- Tutor character panel -->
+  <div id="tutor-panel">
+    <div class="tutor-face-wrap" id="tutor-face-wrap">
+      <!-- SVG injected by JS based on subject -->
+    </div>
+    <div class="tutor-name-tag" id="tutor-name-tag">Math Tiger</div>
+    <div class="tutor-speech-indicator hidden" id="tutor-speech-indicator">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="tutor-status" id="tutor-status"></div>
+  </div>
+  <!-- Lesson content -->
+  <div id="lesson-content">
+    <!-- nav + inner chat + input injected by JS -->
+  </div>
 </div>
 
 <!-- Daily test panel -->
@@ -1069,34 +1188,39 @@
 
 <script>
 // ── API Key Setup ────────────────────────────────────
-const setupScreen = document.getElementById('setup-screen');
-const apiKeyInput = document.getElementById('api-key-input');
-const setupBtn    = document.getElementById('setup-btn');
-const setupError  = document.getElementById('setup-error');
-const toggleKey   = document.getElementById('toggle-key');
+const setupScreen  = document.getElementById('setup-screen');
+const apiKeyInput  = document.getElementById('api-key-input');
+const elKeyInput   = document.getElementById('el-key-input');
+const setupBtn     = document.getElementById('setup-btn');
+const setupError   = document.getElementById('setup-error');
+const toggleKey    = document.getElementById('toggle-key');
+const toggleElKey  = document.getElementById('toggle-el-key');
 const changeKeyBtn = document.getElementById('change-key-btn');
 
-let ANTHROPIC_API_KEY = localStorage.getItem('anna_api_key') || '';
+let ANTHROPIC_API_KEY  = localStorage.getItem('anna_api_key') || '';
+let ELEVENLABS_API_KEY = localStorage.getItem('anna_el_key') || '';
+let ELEVENLABS_VOICE_ID = localStorage.getItem('anna_el_voice') || 'EXAVITQu4vr4xnSDxMaL'; // Charlotte
 
 function showSetup() {
   setupScreen.style.display = 'flex';
   apiKeyInput.value = ANTHROPIC_API_KEY || '';
+  elKeyInput.value  = ELEVENLABS_API_KEY || '';
   setupError.textContent = '';
 }
-function hideSetup() {
-  setupScreen.style.display = 'none';
-}
-
-// Show setup if no key saved
+function hideSetup() { setupScreen.style.display = 'none'; }
 if (!ANTHROPIC_API_KEY) { showSetup(); } else { hideSetup(); }
 
 toggleKey.addEventListener('click', () => {
   apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
 });
+toggleElKey.addEventListener('click', () => {
+  elKeyInput.type = elKeyInput.type === 'password' ? 'text' : 'password';
+});
 
 setupBtn.addEventListener('click', async () => {
   const key = apiKeyInput.value.trim();
-  if (!key) { setupError.textContent = 'Please enter your API key'; return; }
+  const elKey = elKeyInput.value.trim();
+  if (!key) { setupError.textContent = 'Please enter your Claude API key'; return; }
   setupBtn.disabled = true;
   setupBtn.textContent = '🔄 Checking key...';
   setupError.textContent = '';
@@ -1104,28 +1228,53 @@ setupBtn.addEventListener('click', async () => {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Hi' }]
-      })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] })
     });
     const data = await res.json();
     if (res.ok) {
       ANTHROPIC_API_KEY = key;
       localStorage.setItem('anna_api_key', key);
+      if (elKey) { ELEVENLABS_API_KEY = elKey; localStorage.setItem('anna_el_key', elKey); }
       hideSetup();
     } else {
       setupError.textContent = 'Error ' + res.status + ': ' + (data.error?.message || JSON.stringify(data));
     }
-  } catch(err) {
-    setupError.textContent = 'Network error: ' + err.message;
-  }
+  } catch(err) { setupError.textContent = 'Network error: ' + err.message; }
   setupBtn.disabled = false;
   setupBtn.textContent = '🚀 Start Learning!';
 });
 
-changeKeyBtn.addEventListener('click', showSetup);
+// ── Settings overlay ──────────────────────────────────
+const settingsOverlay = document.getElementById('settings-overlay');
+document.getElementById('toggle-settings-key').addEventListener('click', () => {
+  const el = document.getElementById('settings-api-key');
+  el.type = el.type === 'password' ? 'text' : 'password';
+});
+document.getElementById('toggle-settings-el').addEventListener('click', () => {
+  const el = document.getElementById('settings-el-key');
+  el.type = el.type === 'password' ? 'text' : 'password';
+});
+changeKeyBtn.addEventListener('click', () => {
+  document.getElementById('settings-api-key').value = ANTHROPIC_API_KEY;
+  document.getElementById('settings-el-key').value  = ELEVENLABS_API_KEY;
+  document.getElementById('settings-voice-id').value = ELEVENLABS_VOICE_ID;
+  document.getElementById('settings-error').textContent = '';
+  settingsOverlay.style.display = 'flex';
+});
+document.getElementById('settings-cancel').addEventListener('click', () => {
+  settingsOverlay.style.display = 'none';
+});
+document.getElementById('settings-save').addEventListener('click', () => {
+  const ak = document.getElementById('settings-api-key').value.trim();
+  const ek = document.getElementById('settings-el-key').value.trim();
+  const vid = document.getElementById('settings-voice-id').value.trim();
+  if (!ak) { document.getElementById('settings-error').textContent = 'Claude API key is required'; return; }
+  ANTHROPIC_API_KEY = ak;  localStorage.setItem('anna_api_key', ak);
+  ELEVENLABS_API_KEY = ek; localStorage.setItem('anna_el_key', ek);
+  ELEVENLABS_VOICE_ID = vid || 'EXAVITQu4vr4xnSDxMaL';
+  localStorage.setItem('anna_el_voice', ELEVENLABS_VOICE_ID);
+  settingsOverlay.style.display = 'none';
+});
 
 // ── Streak ──────────────────────────────────────────
 let streak = parseInt(localStorage.getItem('anna_streak') || '0');
@@ -1399,8 +1548,10 @@ function showSubjectGreeting(subj) {
 
 
 // ── Voice / TTS ──────────────────────────────────────
-let voiceEnabled = localStorage.getItem('anna_voice') === 'on';
+let voiceEnabled = localStorage.getItem('anna_voice') !== 'off'; // default ON now we have ElevenLabs
 let selectedVoice = null;
+let isSpeaking = false;
+let currentAudio = null;
 const voiceToggleBtn = document.getElementById('voice-toggle');
 
 function updateVoiceBtn() {
@@ -1413,64 +1564,210 @@ voiceToggleBtn.addEventListener('click', () => {
   voiceEnabled = !voiceEnabled;
   localStorage.setItem('anna_voice', voiceEnabled ? 'on' : 'off');
   updateVoiceBtn();
-  if (!voiceEnabled) speechSynthesis.cancel();
+  if (!voiceEnabled) stopSpeaking();
 });
 
 function loadVoice() {
   const voices = speechSynthesis.getVoices();
-  // Prefer a friendly female English voice
-  const preferred = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Fiona', 'Victoria'];
+  const preferred = ['Samantha','Karen','Moira','Tessa','Fiona','Victoria'];
   selectedVoice = voices.find(v => preferred.some(n => v.name.includes(n)) && v.lang.startsWith('en'))
     || voices.find(v => v.lang.startsWith('en-') && v.name.toLowerCase().includes('female'))
-    || voices.find(v => v.lang.startsWith('en'))
-    || null;
+    || voices.find(v => v.lang.startsWith('en')) || null;
 }
 loadVoice();
-if (speechSynthesis.onvoiceschanged !== undefined) {
-  speechSynthesis.onvoiceschanged = loadVoice;
+if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoice;
+
+function stopSpeaking() {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  speechSynthesis.cancel();
+  isSpeaking = false;
+  setTutorState('idle');
 }
 
-function speakText(text) {
-  // Always speaks — used by replay button
-  // Re-load voice if not yet set (can happen on first tap)
+function cleanTextForSpeech(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// ── ElevenLabs TTS ────────────────────────────────────
+async function speakElevenLabs(text, onDone) {
+  const clean = cleanTextForSpeech(text);
+  if (!clean) { onDone?.(); return; }
+  setTutorState('speaking');
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg'
+      },
+      body: JSON.stringify({
+        text: clean,
+        model_id: 'eleven_turbo_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.3, use_speaker_boost: true }
+      })
+    });
+    if (!res.ok) throw new Error('ElevenLabs error ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      currentAudio = null;
+      isSpeaking = false;
+      setTutorState('idle');
+      onDone?.();
+    };
+    audio.onerror = () => { isSpeaking = false; setTutorState('idle'); onDone?.(); };
+    isSpeaking = true;
+    audio.play();
+  } catch(e) {
+    console.warn('ElevenLabs failed, falling back to browser TTS:', e.message);
+    speakBrowser(clean, onDone);
+  }
+}
+
+// ── Browser TTS fallback ──────────────────────────────
+function speakBrowser(clean, onDone) {
   if (!selectedVoice) loadVoice();
   speechSynthesis.cancel();
-  // Small delay after cancel so Safari doesn't block the next speak call
+  setTutorState('speaking');
   setTimeout(() => {
-    const clean = text
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/<[^>]+>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
     const chunks = clean.match(/[^.!?]+[.!?]*/g) || [clean];
     let i = 0;
-    function speakNext() {
-      if (i >= chunks.length) return;
+    function next() {
+      if (i >= chunks.length) { isSpeaking = false; setTutorState('idle'); onDone?.(); return; }
       const utt = new SpeechSynthesisUtterance(chunks[i++]);
       utt.voice = selectedVoice || null;
-      utt.rate = 0.92;
-      utt.pitch = 1.1;
-      utt.volume = 1;
-      utt.onend = speakNext;
+      utt.rate = 0.92; utt.pitch = 1.1; utt.volume = 1;
+      utt.onend = next;
       speechSynthesis.speak(utt);
     }
-    speakNext();
+    isSpeaking = true;
+    next();
   }, 100);
 }
 
-function speak(text) {
-  // Only speaks if auto-play is enabled
-  if (!voiceEnabled) return;
-  speakText(text);
+// ── Main speak entry point ────────────────────────────
+function speakText(text, onDone) {
+  stopSpeaking();
+  const clean = cleanTextForSpeech(text);
+  if (!clean) { onDone?.(); return; }
+  if (ELEVENLABS_API_KEY) {
+    speakElevenLabs(clean, onDone);
+  } else {
+    speakBrowser(clean, onDone);
+  }
+}
+
+function speak(text, onDone) {
+  if (!voiceEnabled) { onDone?.(); return; }
+  speakText(text, onDone);
 }
 
 function addReplayBtn(bub, text) {
   const btn = document.createElement('button');
   btn.className = 'replay-btn';
   btn.innerHTML = '🔊 Replay';
-  btn.onclick = () => speakText(text); // always plays on tap
+  btn.onclick = () => speakText(text);
   bub.appendChild(btn);
+}
+
+// ── Tutor Character SVG ───────────────────────────────
+// Each subject has a distinct face colour scheme
+const TUTOR_CHARS = {
+  'Math': {
+    name: 'Tiger',
+    svgFn: (state) => tutorSVG({ ear:'#f59e0b', face:'#fcd34d', cheek:'#fb923c', nose:'#92400e', stripes:true, state })
+  },
+  'Reading & Writing': {
+    name: 'Owl',
+    svgFn: (state) => tutorSVG({ ear:'#a855f7', face:'#ddd6fe', cheek:'#c4b5fd', nose:'#5b21b6', stripes:false, beak:true, state })
+  },
+  'Science': {
+    name: 'Frog',
+    svgFn: (state) => tutorSVG({ ear:'#10b981', face:'#6ee7b7', cheek:'#34d399', nose:'#065f46', stripes:false, wide:true, state })
+  },
+};
+
+// state: 'idle' | 'speaking' | 'thinking' | 'celebrate'
+function tutorSVG({ ear, face, cheek, nose, stripes, beak, wide, state }) {
+  const mouthOpen = state === 'speaking';
+  const eyeHappy  = state === 'celebrate';
+  const eyeBlink  = state === 'thinking';
+
+  const eyeL = eyeHappy ? `<path d="M38,52 Q44,46 50,52" stroke="#3d2b1f" stroke-width="3" fill="none" stroke-linecap="round"/>` :
+               eyeBlink  ? `<ellipse cx="44" cy="52" rx="7" ry="2" fill="#3d2b1f"/>` :
+                           `<ellipse cx="44" cy="52" rx="7" ry="8" fill="white"/><circle cx="46" cy="52" r="4" fill="#3d2b1f"/><circle cx="48" cy="50" r="1.5" fill="white"/>`;
+  const eyeR = eyeHappy ? `<path d="M70,52 Q76,46 82,52" stroke="#3d2b1f" stroke-width="3" fill="none" stroke-linecap="round"/>` :
+               eyeBlink  ? `<ellipse cx="76" cy="52" rx="7" ry="2" fill="#3d2b1f"/>` :
+                           `<ellipse cx="76" cy="52" rx="7" ry="8" fill="white"/><circle cx="78" cy="52" r="4" fill="#3d2b1f"/><circle cx="80" cy="50" r="1.5" fill="white"/>`;
+
+  const mouth = mouthOpen
+    ? `<ellipse cx="60" cy="80" rx="14" ry="10" fill="#7c2d12"/>
+       <ellipse cx="60" cy="74" rx="14" ry="5" fill="${face}"/>
+       <path d="M46,80 Q60,90 74,80" stroke="#9d174d" stroke-width="1.5" fill="none"/>`
+    : eyeHappy
+    ? `<path d="M48,76 Q60,86 72,76" stroke="#7c2d12" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : `<path d="M50,78 Q60,84 70,78" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+
+  const earL = wide
+    ? `<ellipse cx="20" cy="38" rx="16" ry="20" fill="${ear}"/>`
+    : beak
+    ? `<ellipse cx="22" cy="30" rx="14" ry="18" fill="${ear}"/>`
+    : `<ellipse cx="24" cy="28" rx="14" ry="18" fill="${ear}"/>`;
+  const earR = wide
+    ? `<ellipse cx="100" cy="38" rx="16" ry="20" fill="${ear}"/>`
+    : beak
+    ? `<ellipse cx="98" cy="30" rx="14" ry="18" fill="${ear}"/>`
+    : `<ellipse cx="96" cy="28" rx="14" ry="18" fill="${ear}"/>`;
+
+  const extras = stripes
+    ? `<path d="M30,40 Q36,50 30,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/>
+       <path d="M90,40 Q84,50 90,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/>`
+    : beak
+    ? `<ellipse cx="60" cy="74" rx="10" ry="7" fill="#f59e0b"/>`
+    : '';
+
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    ${earL}${earR}
+    <circle cx="60" cy="65" r="46" fill="${face}"/>
+    <ellipse cx="42" cy="74" rx="10" ry="7" fill="${cheek}" opacity=".5"/>
+    <ellipse cx="78" cy="74" rx="10" ry="7" fill="${cheek}" opacity=".5"/>
+    ${eyeL}${eyeR}
+    ${beak ? '' : `<ellipse cx="60" cy="72" rx="6" ry="4" fill="${nose}"/>`}
+    ${mouth}
+    ${extras}
+    ${state === 'celebrate' ? `<text x="10" y="20" font-size="14">⭐</text><text x="90" y="20" font-size="14">🌟</text>` : ''}
+  </svg>`;
+}
+
+let tutorCurrentState = 'idle';
+function setTutorState(state) {
+  tutorCurrentState = state;
+  const wrap = document.getElementById('tutor-face-wrap');
+  const indicator = document.getElementById('tutor-speech-indicator');
+  const status = document.getElementById('tutor-status');
+  if (!wrap) return;
+  const subject = activeLessonSubject || currentSubject;
+  const char = TUTOR_CHARS[subject] || TUTOR_CHARS['Math'];
+  wrap.innerHTML = char.svgFn(state);
+  if (indicator) indicator.classList.toggle('hidden', state !== 'speaking');
+  if (status) status.textContent = state === 'speaking' ? 'Speaking...' : state === 'thinking' ? 'Thinking...' : '';
+}
+
+function updateTutorForSubject(subject) {
+  const char = TUTOR_CHARS[subject] || TUTOR_CHARS['Math'];
+  const nameTag = document.getElementById('tutor-name-tag');
+  if (nameTag) nameTag.textContent = `${subjectMeta[subject]?.emoji || ''} ${char.name}`;
+  setTutorState('idle');
 }
 
 
@@ -2024,7 +2321,10 @@ function openLesson(subject, index, lessons) {
 
   lessonPanel.classList.remove('visible');
   lessonChatEl.classList.add('visible');
-  lessonChatEl.innerHTML = '';
+  // Clear the content panel (tutor panel stays)
+  const lessonContent = document.getElementById('lesson-content');
+  lessonContent.innerHTML = '';
+  updateTutorForSubject(subject);
 
   // Nav bar
   const nav = document.createElement('div');
@@ -2058,13 +2358,13 @@ function openLesson(subject, index, lessons) {
   nav.appendChild(backBtn);
   nav.appendChild(titleEl);
   nav.appendChild(doneBtn);
-  lessonChatEl.appendChild(nav);
+  lessonContent.appendChild(nav);
 
   // Chat area inside lesson
   const innerChat = document.createElement('div');
   innerChat.id = 'lesson-inner-chat';
   innerChat.style.cssText = 'display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto;padding-bottom:8px;';
-  lessonChatEl.appendChild(innerChat);
+  lessonContent.appendChild(innerChat);
 
   // Input bar for lesson chat
   const lessonInputWrap = document.createElement('div');
@@ -2079,7 +2379,7 @@ function openLesson(subject, index, lessons) {
   lessonSendBtn.style.cssText = 'width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#ff9a3c,#ff6b9d);border:none;cursor:pointer;font-size:1.3rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
   lessonInputWrap.appendChild(lessonInput);
   lessonInputWrap.appendChild(lessonSendBtn);
-  lessonChatEl.appendChild(lessonInputWrap);
+  lessonContent.appendChild(lessonInputWrap);
 
   // Wire up lesson chat send
   async function lessonSend() {
@@ -2102,6 +2402,7 @@ function openLesson(subject, index, lessons) {
     lessonHistory.push({ role: 'user', content: msg });
     saveLessonHistory(subject, index, lessonHistory);
     lessonSendBtn.disabled = true;
+    setTutorState('thinking');
 
     // loading
     const loadWrap = document.createElement('div');
@@ -2150,10 +2451,11 @@ function openLesson(subject, index, lessons) {
       aiWrap.appendChild(aiAv); aiWrap.appendChild(aiBub);
       innerChat.appendChild(aiWrap);
       innerChat.scrollTop = innerChat.scrollHeight;
-      speak(reply);
+      speak(reply, () => { lessonSendBtn.disabled = false; lessonInput.focus(); });
       burst();
     } catch(e) {
       loadWrap.remove();
+      setTutorState('idle');
     }
     lessonSendBtn.disabled = false;
     lessonInput.focus();
@@ -2218,6 +2520,7 @@ function openLesson(subject, index, lessons) {
   saveLessonHistory(subject, index, lessonHistory);
   (async () => {
     lessonSendBtn.disabled = true;
+    setTutorState('thinking');
     const loadWrap = document.createElement('div');
     loadWrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
     const loadAv = document.createElement('div');
@@ -2264,13 +2567,11 @@ function openLesson(subject, index, lessons) {
       aiWrap.appendChild(aiAv); aiWrap.appendChild(aiBub);
       innerChat.appendChild(aiWrap);
       innerChat.scrollTop = innerChat.scrollHeight;
-      speak(reply);
+      speak(reply, () => deliverMiniQuiz());
       burst();
-    } catch(e) { loadWrap.remove(); }
+    } catch(e) { loadWrap.remove(); setTutorState('idle'); }
     lessonSendBtn.disabled = false;
     lessonInput.focus();
-    // Trigger mini quiz after the first lesson delivery
-    deliverMiniQuiz();
   })();
 }
 
@@ -2423,6 +2724,8 @@ function showMiniQuizResult(correct, subject, index, innerChat, meta) {
       <strong>Amazing, Anna! You got ${correct}/3 right!</strong> 🌟<br><br>
       You've really understood this lesson. Tap <strong>✅ Done!</strong> to unlock the next one!`;
     setLessonQuizPassed(subject, index);
+    setTutorState('celebrate');
+    setTimeout(() => setTutorState('idle'), 3000);
     const doneBtn = document.querySelector('.lesson-done-btn');
     if (doneBtn) {
       doneBtn.style.display = '';
