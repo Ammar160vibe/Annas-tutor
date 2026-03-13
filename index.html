@@ -1988,10 +1988,36 @@ let activeLessonSubject = '';
 let activeLessonIndex = 0;
 let lessonHistory = [];
 
+function lessonHistoryKey(subject, index) {
+  const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return `anna_lesson_history_${subject.replace(/\s/g,'_')}_G${currentGrade}_W${weekNum}_L${index}`;
+}
+function saveLessonHistory(subject, index, history) {
+  localStorage.setItem(lessonHistoryKey(subject, index), JSON.stringify(history));
+}
+function loadLessonHistory(subject, index) {
+  const raw = localStorage.getItem(lessonHistoryKey(subject, index));
+  return raw ? JSON.parse(raw) : null;
+}
+
+function lessonQuizKey(subject, index) {
+  const weekNum = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return `anna_lesson_quiz_${subject.replace(/\s/g,'_')}_G${currentGrade}_W${weekNum}_L${index}`;
+}
+function getLessonQuizPassed(subject, index) {
+  return localStorage.getItem(lessonQuizKey(subject, index)) === 'passed';
+}
+function setLessonQuizPassed(subject, index) {
+  localStorage.setItem(lessonQuizKey(subject, index), 'passed');
+}
+
 function openLesson(subject, index, lessons) {
   activeLessonSubject = subject;
   activeLessonIndex = index;
-  lessonHistory = [];
+
+  // Restore saved history if it exists, otherwise start fresh
+  const saved = loadLessonHistory(subject, index);
+  lessonHistory = saved || [];
 
   const lesson = lessons[index];
   const meta = subjectMeta[subject];
@@ -2021,7 +2047,13 @@ function openLesson(subject, index, lessons) {
   const doneBtn = document.createElement('button');
   doneBtn.className = 'lesson-done-btn';
   doneBtn.textContent = '✅ Done!';
+  doneBtn.style.display = 'none'; // hidden until mini quiz passed
   doneBtn.addEventListener('click', () => markLessonDone(subject, index));
+
+  // If quiz was already passed in a previous session, show Done immediately
+  if (getLessonQuizPassed(subject, index)) {
+    doneBtn.style.display = '';
+  }
 
   nav.appendChild(backBtn);
   nav.appendChild(titleEl);
@@ -2068,6 +2100,7 @@ function openLesson(subject, index, lessons) {
     innerChat.scrollTop = innerChat.scrollHeight;
 
     lessonHistory.push({ role: 'user', content: msg });
+    saveLessonHistory(subject, index, lessonHistory);
     lessonSendBtn.disabled = true;
 
     // loading
@@ -2096,6 +2129,7 @@ function openLesson(subject, index, lessons) {
       const data = await res.json();
       const reply = data.content?.map(b => b.text||'').join('') || "Let me try that again! 🐻";
       lessonHistory.push({ role: 'assistant', content: reply });
+      saveLessonHistory(subject, index, lessonHistory);
       loadWrap.remove();
 
       const aiWrap = document.createElement('div');
@@ -2125,11 +2159,63 @@ function openLesson(subject, index, lessons) {
     lessonInput.focus();
   }
 
+  // Helper: render a saved message pair as a bubble (no API call)
+  function replayBubble(role, text) {
+    if (role === 'user') {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;justify-content:flex-end;gap:10px;align-items:flex-end;';
+      const bub = document.createElement('div');
+      bub.className = 'bubble user';
+      bub.textContent = text;
+      const av = document.createElement('div');
+      av.className = 'avatar user'; av.textContent = '🧒';
+      wrap.appendChild(bub); wrap.appendChild(av);
+      innerChat.appendChild(wrap);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+      const av = document.createElement('div');
+      av.className = 'avatar ai'; av.textContent = meta.emoji;
+      const bub = document.createElement('div');
+      bub.className = 'bubble ai';
+      const strip = document.createElement('div');
+      strip.className = `subj-strip strip-${meta.strip.replace('strip-','')}`;
+      strip.textContent = `${meta.emoji} Lesson ${index+1}`;
+      bub.appendChild(strip);
+      bub.appendChild(document.createElement('br'));
+      const txt = document.createElement('div');
+      txt.innerHTML = fmt(text);
+      bub.appendChild(txt);
+      addReplayBtn(bub, text);
+      wrap.appendChild(av); wrap.appendChild(bub);
+      innerChat.appendChild(wrap);
+    }
+    innerChat.scrollTop = innerChat.scrollHeight;
+  }
+
   lessonSendBtn.addEventListener('click', lessonSend);
   lessonInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); lessonSend(); } });
 
-  // Auto-start: deliver the lesson immediately
+  // If we have saved history, replay it as bubbles — skip the first user turn (it's the auto-start prompt)
+  if (lessonHistory.length > 0) {
+    lessonHistory.forEach((msg, i) => {
+      if (i === 0 && msg.role === 'user') return; // skip "Please teach me about..." prompt
+      replayBubble(msg.role, msg.content);
+    });
+    // Show done button if quiz already passed
+    if (getLessonQuizPassed(subject, index)) {
+      doneBtn.style.display = '';
+    } else {
+      // Re-run the quiz so she can still complete it
+      deliverMiniQuiz();
+    }
+    lessonInput.focus();
+    return; // don't re-fetch the opening lesson
+  }
+
+  // Auto-start: deliver the lesson for the first time
   lessonHistory.push({ role: 'user', content: `Please teach me about: ${lesson.title}` });
+  saveLessonHistory(subject, index, lessonHistory);
   (async () => {
     lessonSendBtn.disabled = true;
     const loadWrap = document.createElement('div');
@@ -2157,6 +2243,7 @@ function openLesson(subject, index, lessons) {
       const data = await res.json();
       const reply = data.content?.map(b => b.text||'').join('') || "Let me try that again! 🐻";
       lessonHistory.push({ role: 'assistant', content: reply });
+      saveLessonHistory(subject, index, lessonHistory);
       loadWrap.remove();
 
       const aiWrap = document.createElement('div');
@@ -2182,7 +2269,185 @@ function openLesson(subject, index, lessons) {
     } catch(e) { loadWrap.remove(); }
     lessonSendBtn.disabled = false;
     lessonInput.focus();
+    // Trigger mini quiz after the first lesson delivery
+    deliverMiniQuiz();
   })();
+}
+
+// ── End-of-lesson mini quiz ───────────────────────────
+async function deliverMiniQuiz() {
+  // Small delay so Anna can read the lesson first
+  await new Promise(r => setTimeout(r, 1200));
+
+  const subject = activeLessonSubject;
+  const index   = activeLessonIndex;
+  const meta    = subjectMeta[subject];
+  const innerChat = document.getElementById('lesson-inner-chat');
+  if (!innerChat) return;
+
+  // Intro bubble
+  const introWrap = document.createElement('div');
+  introWrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+  const introAv = document.createElement('div');
+  introAv.className = 'avatar ai'; introAv.textContent = meta.emoji;
+  const introBub = document.createElement('div');
+  introBub.className = 'bubble ai';
+  introBub.style.borderTop = `3px solid ${meta.color}55`;
+  introBub.innerHTML = `<div class="subj-strip strip-${meta.strip.replace('strip-','')}">⚡ Quick Check!</div><br>
+    <strong>Let's see what you learned!</strong> Answer these 3 quick questions — get at least 2 right to complete the lesson! 🌟`;
+  introWrap.appendChild(introAv); introWrap.appendChild(introBub);
+  innerChat.appendChild(introWrap);
+  innerChat.scrollTop = innerChat.scrollHeight;
+  speak("Let's see what you learned! Answer these quick questions to complete the lesson!");
+
+  // Generate 3 questions via Claude
+  let questions = [];
+  const loadWrap = document.createElement('div');
+  loadWrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+  const loadAv = document.createElement('div');
+  loadAv.className = 'avatar ai'; loadAv.textContent = meta.emoji;
+  const loadBub = document.createElement('div');
+  loadBub.className = 'bubble ai';
+  loadBub.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  loadWrap.appendChild(loadAv); loadWrap.appendChild(loadBub);
+  innerChat.appendChild(loadWrap);
+  innerChat.scrollTop = innerChat.scrollHeight;
+
+  try {
+    const lessonText = lessonHistory.map(m => m.content).join('\n');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: `Generate exactly 3 multiple choice questions to check understanding of a lesson just taught to a Grade ${currentGrade} student. Respond ONLY with a JSON array, no markdown:
+[{"q":"question?","opts":["correct","wrong1","wrong2","wrong3"],"correct":0},...]
+Rules: "correct" is index of correct answer in opts. Keep language simple for Grade ${currentGrade}. Base questions strictly on what was taught.`,
+        messages: [{ role: 'user', content: `Lesson content:\n${lessonText}\n\nGenerate 3 check questions.` }]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.map(b=>b.text||'').join('') || '[]';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    questions = parsed.map(q => {
+      const correctText = q.opts[q.correct];
+      const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+      return { q: q.q, opts: shuffled, correct: shuffled.indexOf(correctText) };
+    });
+  } catch(e) { /* fallback below */ }
+  loadWrap.remove();
+
+  // Fallback if generation fails
+  if (!questions.length) {
+    const fallbackBub = document.createElement('div');
+    fallbackBub.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+    const fa = document.createElement('div'); fa.className='avatar ai'; fa.textContent=meta.emoji;
+    const fb = document.createElement('div'); fb.className='bubble ai';
+    fb.textContent = "I couldn't load the quiz right now. You can mark this lesson done and move on! 🐻";
+    fallbackBub.appendChild(fa); fallbackBub.appendChild(fb);
+    innerChat.appendChild(fallbackBub);
+    // Show done button anyway on failure
+    const doneBtn = document.querySelector('.lesson-done-btn');
+    if (doneBtn) doneBtn.style.display = '';
+    return;
+  }
+
+  // Render questions one at a time
+  let correctCount = 0;
+  let answered = 0;
+
+  function renderMiniQ(qi) {
+    if (qi >= questions.length) {
+      showMiniQuizResult(correctCount, subject, index, innerChat, meta);
+      return;
+    }
+    const q = questions[qi];
+    const qWrap = document.createElement('div');
+    qWrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+    const qAv = document.createElement('div');
+    qAv.className = 'avatar ai'; qAv.textContent = meta.emoji;
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    const qText = document.createElement('div');
+    qText.className = 'quiz-question';
+    qText.textContent = `❓ ${q.q}`;
+    card.appendChild(qText);
+    const optsEl = document.createElement('div');
+    optsEl.className = 'quiz-options';
+    q.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      btn.addEventListener('click', (e) => {
+        optsEl.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+        const isRight = oi === q.correct;
+        btn.classList.add(isRight ? 'correct' : 'wrong');
+        if (!isRight) optsEl.querySelectorAll('.quiz-option')[q.correct].classList.add('correct');
+        const fb = document.createElement('div');
+        fb.className = `quiz-feedback ${isRight ? 'right' : 'wrong'}`;
+        if (isRight) {
+          fb.textContent = ['🌟 Correct!', '⭐ Well done!', '🎉 That\'s right!'][Math.floor(Math.random()*3)];
+          correctCount++;
+          starBurst(e.clientX, e.clientY);
+        } else {
+          fb.textContent = `The answer was "${q.opts[q.correct]}" — keep going! 💪`;
+        }
+        card.appendChild(fb);
+        innerChat.scrollTop = innerChat.scrollHeight;
+        setTimeout(() => renderMiniQ(qi + 1), 1000);
+      });
+      optsEl.appendChild(btn);
+    });
+    card.appendChild(optsEl);
+    qWrap.appendChild(qAv); qWrap.appendChild(card);
+    innerChat.appendChild(qWrap);
+    innerChat.scrollTop = innerChat.scrollHeight;
+  }
+
+  renderMiniQ(0);
+}
+
+function showMiniQuizResult(correct, subject, index, innerChat, meta) {
+  const passed = correct >= 2;
+  const resultWrap = document.createElement('div');
+  resultWrap.style.cssText = 'display:flex;gap:10px;align-items:flex-end;';
+  const rAv = document.createElement('div');
+  rAv.className = 'avatar ai'; rAv.textContent = meta.emoji;
+  const rBub = document.createElement('div');
+  rBub.className = 'bubble ai';
+  rBub.style.borderTop = passed ? '3px solid #10b98155' : '3px solid #f59e0b55';
+
+  if (passed) {
+    rBub.innerHTML = `<div class="subj-strip strip-${meta.strip.replace('strip-','')}">🎉 Lesson Complete!</div><br>
+      <strong>Amazing, Anna! You got ${correct}/3 right!</strong> 🌟<br><br>
+      You've really understood this lesson. Tap <strong>✅ Done!</strong> to unlock the next one!`;
+    setLessonQuizPassed(subject, index);
+    const doneBtn = document.querySelector('.lesson-done-btn');
+    if (doneBtn) {
+      doneBtn.style.display = '';
+      doneBtn.style.animation = 'pulse-unlock 1.5s ease-in-out 3';
+    }
+    burst(); burst();
+  } else {
+    rBub.innerHTML = `<div class="subj-strip strip-${meta.strip.replace('strip-','')}">💪 Keep Going!</div><br>
+      You got <strong>${correct}/3</strong> right — so close! You need at least 2 to complete the lesson.<br><br>
+      Feel free to ask me more questions about this topic, then I'll quiz you again! 🐻`;
+    // Add a retry quiz button
+    const retryBtn = document.createElement('button');
+    retryBtn.style.cssText = 'margin-top:10px;background:linear-gradient(135deg,#f59e0b,#ff9a3c);color:white;border:none;border-radius:14px;padding:9px 18px;font-family:Fredoka One,cursive;font-size:.9rem;cursor:pointer;width:100%;';
+    retryBtn.textContent = '🔄 Try the Quiz Again';
+    retryBtn.addEventListener('click', () => deliverMiniQuiz());
+    rBub.appendChild(retryBtn);
+  }
+
+  resultWrap.appendChild(rAv); resultWrap.appendChild(rBub);
+  innerChat.appendChild(resultWrap);
+  innerChat.scrollTop = innerChat.scrollHeight;
+  speak(passed
+    ? `Amazing Anna! You got ${correct} out of 3 right! Tap Done to unlock the next lesson!`
+    : `You got ${correct} out of 3. Keep practising and try the quiz again!`
+  );
 }
 
 function markLessonDone(subject, index) {
