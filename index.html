@@ -1052,20 +1052,41 @@
 </div>
 
 <!-- Settings overlay (for changing keys later) -->
-<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1001;justify-content:center;align-items:center;padding:24px;">
-  <div class="setup-card" style="max-width:400px;">
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1001;justify-content:center;align-items:flex-start;padding:20px;overflow-y:auto;">
+  <div class="setup-card" style="max-width:440px;width:100%;margin:auto;">
     <div style="font-family:Fredoka One,cursive;font-size:1.4rem;color:#92400e;margin-bottom:16px;">⚙️ Settings</div>
-    <div style="font-weight:800;font-size:.85rem;margin-bottom:6px;text-align:left;">Claude API Key</div>
+
+    <!-- Animal Pickers -->
+    <div style="font-family:Fredoka One,cursive;font-size:1rem;color:#92400e;margin-bottom:10px;">🐾 Choose Your Tutors</div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-weight:800;font-size:.82rem;color:#9b7b6a;margin-bottom:6px;">🐯 Math Tutor</div>
+      <div id="animal-picker-math" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-weight:800;font-size:.82rem;color:#9b7b6a;margin-bottom:6px;">🦉 Reading &amp; Writing Tutor</div>
+      <div id="animal-picker-read" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-weight:800;font-size:.82rem;color:#9b7b6a;margin-bottom:6px;">🐸 Science Tutor</div>
+      <div id="animal-picker-sci" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
+
+    <hr style="border:none;border-top:2px solid #fde68a;margin-bottom:14px;">
+
+    <!-- API Keys -->
+    <div style="font-family:Fredoka One,cursive;font-size:1rem;color:#92400e;margin-bottom:10px;">🔑 API Keys</div>
+    <div style="font-weight:800;font-size:.82rem;margin-bottom:6px;text-align:left;">Claude API Key</div>
     <div class="setup-input-wrap">
       <input type="password" id="settings-api-key" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" spellcheck="false" />
       <button id="toggle-settings-key">👁️</button>
     </div>
-    <div style="font-weight:800;font-size:.85rem;margin:10px 0 6px;text-align:left;">ElevenLabs API Key <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
+    <div style="font-weight:800;font-size:.82rem;margin:10px 0 6px;text-align:left;">ElevenLabs API Key <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
     <div class="setup-input-wrap">
       <input type="password" id="settings-el-key" placeholder="ElevenLabs key..." autocomplete="off" autocorrect="off" spellcheck="false" />
       <button id="toggle-settings-el">👁️</button>
     </div>
-    <div style="font-weight:800;font-size:.85rem;margin:10px 0 6px;text-align:left;">ElevenLabs Voice ID <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
+    <div style="font-weight:800;font-size:.82rem;margin:10px 0 6px;text-align:left;">ElevenLabs Voice ID <span style="font-weight:400;color:#9b7b6a;">(optional)</span></div>
     <input id="settings-voice-id" type="text" placeholder="e.g. EXAVITQu4vr4xnSDxMaL (default: Charlotte)" style="width:100%;background:#fff8f0;border:2px solid #fcd34d;border-radius:12px;padding:10px 14px;font-size:.88rem;outline:none;margin-bottom:10px;" autocomplete="off" />
     <div id="settings-error" style="color:#ef4444;font-size:.8rem;min-height:16px;margin-bottom:8px;"></div>
     <div style="display:flex;gap:10px;">
@@ -1246,6 +1267,58 @@ setupBtn.addEventListener('click', async () => {
 
 // ── Settings overlay ──────────────────────────────────
 const settingsOverlay = document.getElementById('settings-overlay');
+
+// Populate animal pickers
+function buildAnimalPickers() {
+  const pickerMap = {
+    'Math':              'animal-picker-math',
+    'Reading & Writing': 'animal-picker-read',
+    'Science':           'animal-picker-sci',
+  };
+  Object.entries(pickerMap).forEach(([subj, pickerId]) => {
+    const container = document.getElementById(pickerId);
+    if (!container) return;
+    container.innerHTML = '';
+    const options = SUBJECT_ANIMAL_OPTIONS[subj];
+    const current = chosenAnimals[subj] || options[0];
+    options.forEach(animalId => {
+      const animal = ALL_ANIMALS[animalId];
+      const card = document.createElement('div');
+      const isSelected = animalId === current;
+      card.style.cssText = `
+        display:flex;flex-direction:column;align-items:center;gap:4px;
+        padding:8px 6px;border-radius:14px;cursor:pointer;
+        border:2.5px solid ${isSelected ? '#f59e0b' : '#fde68a'};
+        background:${isSelected ? '#fef3c7' : 'white'};
+        width:70px;transition:all .18s;flex-shrink:0;
+      `;
+      card.dataset.animal = animalId;
+      card.dataset.subject = subj;
+      // Mini SVG preview (always idle state)
+      const svgWrap = document.createElement('div');
+      svgWrap.style.cssText = 'width:44px;height:44px;';
+      svgWrap.innerHTML = animal.svgFn('idle');
+      const label = document.createElement('div');
+      label.style.cssText = 'font-family:Fredoka One,cursive;font-size:.68rem;color:#92400e;text-align:center;';
+      label.textContent = animal.name;
+      card.appendChild(svgWrap);
+      card.appendChild(label);
+      card.addEventListener('click', () => {
+        // Deselect others in same group
+        container.querySelectorAll('[data-animal]').forEach(c => {
+          c.style.borderColor = '#fde68a';
+          c.style.background = 'white';
+        });
+        card.style.borderColor = '#f59e0b';
+        card.style.background = '#fef3c7';
+        // Store pending choice (committed on Save)
+        card.dataset.pending = 'true';
+        container._pending = animalId;
+      });
+      container.appendChild(card);
+    });
+  });
+}
 document.getElementById('toggle-settings-key').addEventListener('click', () => {
   const el = document.getElementById('settings-api-key');
   el.type = el.type === 'password' ? 'text' : 'password';
@@ -1259,20 +1332,42 @@ changeKeyBtn.addEventListener('click', () => {
   document.getElementById('settings-el-key').value  = ELEVENLABS_API_KEY;
   document.getElementById('settings-voice-id').value = ELEVENLABS_VOICE_ID;
   document.getElementById('settings-error').textContent = '';
+  buildAnimalPickers();
   settingsOverlay.style.display = 'flex';
 });
 document.getElementById('settings-cancel').addEventListener('click', () => {
   settingsOverlay.style.display = 'none';
 });
 document.getElementById('settings-save').addEventListener('click', () => {
-  const ak = document.getElementById('settings-api-key').value.trim();
-  const ek = document.getElementById('settings-el-key').value.trim();
+  const ak  = document.getElementById('settings-api-key').value.trim();
+  const ek  = document.getElementById('settings-el-key').value.trim();
   const vid = document.getElementById('settings-voice-id').value.trim();
   if (!ak) { document.getElementById('settings-error').textContent = 'Claude API key is required'; return; }
   ANTHROPIC_API_KEY = ak;  localStorage.setItem('anna_api_key', ak);
   ELEVENLABS_API_KEY = ek; localStorage.setItem('anna_el_key', ek);
   ELEVENLABS_VOICE_ID = vid || 'EXAVITQu4vr4xnSDxMaL';
   localStorage.setItem('anna_el_voice', ELEVENLABS_VOICE_ID);
+
+  // Commit any pending animal choices
+  const pickerMap = {
+    'Math':              'animal-picker-math',
+    'Reading & Writing': 'animal-picker-read',
+    'Science':           'animal-picker-sci',
+  };
+  let animalsChanged = false;
+  Object.entries(pickerMap).forEach(([subj, pickerId]) => {
+    const container = document.getElementById(pickerId);
+    if (container?._pending) {
+      chosenAnimals[subj] = container._pending;
+      animalsChanged = true;
+    }
+  });
+  if (animalsChanged) {
+    saveAnimalChoices();
+    buildTutorChars(); // rebuild with new selections
+    updateTutorForSubject(activeLessonSubject || currentSubject);
+  }
+
   settingsOverlay.style.display = 'none';
 });
 
@@ -1682,23 +1777,55 @@ function addReplayBtn(bub, text) {
 
 // ── Tutor Character SVG ───────────────────────────────
 // Each subject has a distinct face colour scheme
-const TUTOR_CHARS = {
-  'Math': {
-    name: 'Tiger',
-    svgFn: (state) => tutorSVG({ ear:'#f59e0b', face:'#fcd34d', cheek:'#fb923c', nose:'#92400e', stripes:true, state })
-  },
-  'Reading & Writing': {
-    name: 'Owl',
-    svgFn: (state) => tutorSVG({ ear:'#a855f7', face:'#ddd6fe', cheek:'#c4b5fd', nose:'#5b21b6', stripes:false, beak:true, state })
-  },
-  'Science': {
-    name: 'Frog',
-    svgFn: (state) => tutorSVG({ ear:'#10b981', face:'#6ee7b7', cheek:'#34d399', nose:'#065f46', stripes:false, wide:true, state })
-  },
+// ── Animal definitions — all available tutors ────────
+const ALL_ANIMALS = {
+  // ── Math animals ──
+  tiger:    { name:'Tiger',    emoji:'🐯', svgFn: s => tutorSVG({ ear:'#f59e0b', face:'#fcd34d', cheek:'#fb923c', nose:'#92400e', stripes:true,  state:s }) },
+  bear:     { name:'Bear',     emoji:'🐻', svgFn: s => tutorSVG({ ear:'#92400e', face:'#b45309', cheek:'#d97706', nose:'#431407', round:true,    state:s }) },
+  panda:    { name:'Panda',    emoji:'🐼', svgFn: s => tutorSVG({ ear:'#1e1b4b', face:'#f8fafc', cheek:'#cbd5e1', nose:'#1e1b4b', panda:true,    state:s }) },
+  lion:     { name:'Lion',     emoji:'🦁', svgFn: s => tutorSVG({ ear:'#d97706', face:'#fef3c7', cheek:'#fcd34d', nose:'#92400e', mane:true,     state:s }) },
+  fox:      { name:'Fox',      emoji:'🦊', svgFn: s => tutorSVG({ ear:'#ea580c', face:'#fed7aa', cheek:'#fb923c', nose:'#7c2d12', fox:true,      state:s }) },
+  // ── Reading animals ──
+  owl:      { name:'Owl',      emoji:'🦉', svgFn: s => tutorSVG({ ear:'#a855f7', face:'#ddd6fe', cheek:'#c4b5fd', nose:'#5b21b6', beak:true,     state:s }) },
+  bunny:    { name:'Bunny',    emoji:'🐰', svgFn: s => tutorSVG({ ear:'#ec4899', face:'#fce7f3', cheek:'#fbcfe8', nose:'#9d174d', bunny:true,    state:s }) },
+  cat:      { name:'Cat',      emoji:'🐱', svgFn: s => tutorSVG({ ear:'#6366f1', face:'#e0e7ff', cheek:'#c7d2fe', nose:'#3730a3', cat:true,      state:s }) },
+  koala:    { name:'Koala',    emoji:'🐨', svgFn: s => tutorSVG({ ear:'#64748b', face:'#e2e8f0', cheek:'#cbd5e1', nose:'#334155', wide:true,     state:s }) },
+  penguin:  { name:'Penguin',  emoji:'🐧', svgFn: s => tutorSVG({ ear:'#0f172a', face:'#f8fafc', cheek:'#fcd34d', nose:'#0f172a', penguin:true,  state:s }) },
+  // ── Science animals ──
+  frog:     { name:'Frog',     emoji:'🐸', svgFn: s => tutorSVG({ ear:'#10b981', face:'#6ee7b7', cheek:'#34d399', nose:'#065f46', wide:true,     state:s }) },
+  dino:     { name:'Dino',     emoji:'🦕', svgFn: s => tutorSVG({ ear:'#16a34a', face:'#bbf7d0', cheek:'#4ade80', nose:'#14532d', spikes:true,   state:s }) },
+  dog:      { name:'Dog',      emoji:'🐶', svgFn: s => tutorSVG({ ear:'#b45309', face:'#fef9c3', cheek:'#fde68a', nose:'#78350f', floppy:true,   state:s }) },
+  elephant: { name:'Elephant', emoji:'🐘', svgFn: s => tutorSVG({ ear:'#94a3b8', face:'#cbd5e1', cheek:'#93c5fd', nose:'#475569', elephant:true, state:s }) },
+  dragon:   { name:'Dragon',   emoji:'🐲', svgFn: s => tutorSVG({ ear:'#dc2626', face:'#fca5a5', cheek:'#f87171', nose:'#7f1d1d', spikes:true,   state:s }) },
 };
 
+const SUBJECT_ANIMAL_OPTIONS = {
+  'Math':              ['tiger','bear','panda','lion','fox'],
+  'Reading & Writing': ['owl','bunny','cat','koala','penguin'],
+  'Science':           ['frog','dino','dog','elephant','dragon'],
+};
+
+// Load saved choices (default to first in each list)
+let chosenAnimals = JSON.parse(localStorage.getItem('anna_animals') || '{}');
+function getAnimalForSubject(subject) {
+  const id = chosenAnimals[subject] || SUBJECT_ANIMAL_OPTIONS[subject][0];
+  return ALL_ANIMALS[id] || ALL_ANIMALS[SUBJECT_ANIMAL_OPTIONS[subject][0]];
+}
+function saveAnimalChoices() {
+  localStorage.setItem('anna_animals', JSON.stringify(chosenAnimals));
+}
+
+// Rebuild TUTOR_CHARS dynamically from chosen animals
+function buildTutorChars() {
+  Object.keys(SUBJECT_ANIMAL_OPTIONS).forEach(subj => {
+    TUTOR_CHARS[subj] = getAnimalForSubject(subj);
+  });
+}
+const TUTOR_CHARS = {};
+buildTutorChars();
+
 // state: 'idle' | 'speaking' | 'thinking' | 'celebrate'
-function tutorSVG({ ear, face, cheek, nose, stripes, beak, wide, state }) {
+function tutorSVG({ ear, face, cheek, nose, stripes, beak, wide, round, panda, mane, fox, bunny, cat, penguin, spikes, floppy, elephant, state }) {
   const mouthOpen = state === 'speaking';
   const eyeHappy  = state === 'celebrate';
   const eyeBlink  = state === 'thinking';
@@ -1710,6 +1837,17 @@ function tutorSVG({ ear, face, cheek, nose, stripes, beak, wide, state }) {
                eyeBlink  ? `<ellipse cx="76" cy="52" rx="7" ry="2" fill="#3d2b1f"/>` :
                            `<ellipse cx="76" cy="52" rx="7" ry="8" fill="white"/><circle cx="78" cy="52" r="4" fill="#3d2b1f"/><circle cx="80" cy="50" r="1.5" fill="white"/>`;
 
+  // Panda gets black eye patches
+  const pandaEyeL = eyeHappy ? `<path d="M34,52 Q42,44 50,52" stroke="#1e1b4b" stroke-width="3" fill="none" stroke-linecap="round"/>` :
+                   eyeBlink  ? `<ellipse cx="42" cy="52" rx="9" ry="3" fill="#1e1b4b"/>` :
+                               `<ellipse cx="42" cy="52" rx="10" ry="11" fill="#1e1b4b"/><ellipse cx="44" cy="52" rx="6" ry="7" fill="white"/><circle cx="46" cy="52" r="3" fill="#1e1b4b"/>`;
+  const pandaEyeR = eyeHappy ? `<path d="M70,52 Q78,44 86,52" stroke="#1e1b4b" stroke-width="3" fill="none" stroke-linecap="round"/>` :
+                   eyeBlink  ? `<ellipse cx="78" cy="52" rx="9" ry="3" fill="#1e1b4b"/>` :
+                               `<ellipse cx="78" cy="52" rx="10" ry="11" fill="#1e1b4b"/><ellipse cx="76" cy="52" rx="6" ry="7" fill="white"/><circle cx="74" cy="52" r="3" fill="#1e1b4b"/>`;
+
+  const usedEyeL = panda ? pandaEyeL : eyeL;
+  const usedEyeR = panda ? pandaEyeR : eyeR;
+
   const mouth = mouthOpen
     ? `<ellipse cx="60" cy="80" rx="14" ry="10" fill="#7c2d12"/>
        <ellipse cx="60" cy="74" rx="14" ry="5" fill="${face}"/>
@@ -1718,34 +1856,56 @@ function tutorSVG({ ear, face, cheek, nose, stripes, beak, wide, state }) {
     ? `<path d="M48,76 Q60,86 72,76" stroke="#7c2d12" stroke-width="3" fill="none" stroke-linecap="round"/>`
     : `<path d="M50,78 Q60,84 70,78" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
 
-  const earL = wide
-    ? `<ellipse cx="20" cy="38" rx="16" ry="20" fill="${ear}"/>`
-    : beak
-    ? `<ellipse cx="22" cy="30" rx="14" ry="18" fill="${ear}"/>`
-    : `<ellipse cx="24" cy="28" rx="14" ry="18" fill="${ear}"/>`;
-  const earR = wide
-    ? `<ellipse cx="100" cy="38" rx="16" ry="20" fill="${ear}"/>`
-    : beak
-    ? `<ellipse cx="98" cy="30" rx="14" ry="18" fill="${ear}"/>`
-    : `<ellipse cx="96" cy="28" rx="14" ry="18" fill="${ear}"/>`;
+  // Ear shapes
+  let earL, earR;
+  if (bunny) {
+    earL = `<ellipse cx="38" cy="16" rx="9" ry="22" fill="${ear}"/><ellipse cx="38" cy="16" rx="5" ry="17" fill="#fce7f3"/>`;
+    earR = `<ellipse cx="82" cy="16" rx="9" ry="22" fill="${ear}"/><ellipse cx="82" cy="16" rx="5" ry="17" fill="#fce7f3"/>`;
+  } else if (cat) {
+    earL = `<polygon points="20,45 38,18 52,45" fill="${ear}"/><polygon points="27,42 38,22 49,42" fill="#fce7f3"/>`;
+    earR = `<polygon points="68,45 82,18 100,45" fill="${ear}"/><polygon points="71,42 82,22 91,42" fill="#fce7f3"/>`;
+  } else if (floppy) { // dog
+    earL = `<ellipse cx="22" cy="58" rx="14" ry="22" fill="${ear}" transform="rotate(-15,22,58)"/>`;
+    earR = `<ellipse cx="98" cy="58" rx="14" ry="22" fill="${ear}" transform="rotate(15,98,58)"/>`;
+  } else if (elephant) {
+    earL = `<ellipse cx="14" cy="62" rx="18" ry="26" fill="${ear}"/>`;
+    earR = `<ellipse cx="106" cy="62" rx="18" ry="26" fill="${ear}"/>`;
+  } else if (wide) {
+    earL = `<ellipse cx="20" cy="38" rx="16" ry="20" fill="${ear}"/>`;
+    earR = `<ellipse cx="100" cy="38" rx="16" ry="20" fill="${ear}"/>`;
+  } else if (beak || penguin) {
+    earL = `<ellipse cx="22" cy="30" rx="14" ry="18" fill="${ear}"/>`;
+    earR = `<ellipse cx="98" cy="30" rx="14" ry="18" fill="${ear}"/>`;
+  } else {
+    earL = `<ellipse cx="24" cy="28" rx="14" ry="18" fill="${ear}"/>`;
+    earR = `<ellipse cx="96" cy="28" rx="14" ry="18" fill="${ear}"/>`;
+  }
 
-  const extras = stripes
-    ? `<path d="M30,40 Q36,50 30,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/>
-       <path d="M90,40 Q84,50 90,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/>`
-    : beak
-    ? `<ellipse cx="60" cy="74" rx="10" ry="7" fill="#f59e0b"/>`
-    : '';
+  // Extras / special features
+  let extras = '';
+  if (stripes)   extras = `<path d="M30,40 Q36,50 30,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/><path d="M90,40 Q84,50 90,60" stroke="${ear}" stroke-width="4" fill="none" opacity=".5"/>`;
+  if (beak)      extras = `<ellipse cx="60" cy="74" rx="10" ry="7" fill="#f59e0b"/>`;
+  if (penguin)   extras = `<ellipse cx="60" cy="74" rx="18" ry="24" fill="white"/><ellipse cx="60" cy="74" rx="8" ry="6" fill="#f59e0b"/>`;
+  if (mane)      extras = `<circle cx="60" cy="68" r="50" fill="${ear}" opacity=".35"/><circle cx="60" cy="60" r="40" fill="${face}"/>`;
+  if (fox)       extras = `<polygon points="40,68 60,78 80,68 60,110" fill="white" opacity=".6"/>`;
+  if (panda)     extras = `<ellipse cx="60" cy="76" rx="14" ry="8" fill="#1e1b4b" opacity=".8"/>`;
+  if (spikes)    extras = `<path d="M30,32 L24,14 L38,28" fill="${ear}"/><path d="M60,22 L55,4 L68,20" fill="${ear}"/><path d="M88,32 L96,14 L82,28" fill="${ear}"/>`;
+  if (elephant)  extras = `<ellipse cx="60" cy="84" rx="8" ry="14" fill="${nose}"/>`;
+  if (round)     extras = `<ellipse cx="60" cy="76" rx="16" ry="10" fill="${cheek}" opacity=".6"/>`;
+
+  const noseEl = (beak || penguin || elephant) ? '' : `<ellipse cx="60" cy="72" rx="6" ry="4" fill="${nose}"/>`;
 
   return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    ${mane ? extras : ''}
     ${earL}${earR}
     <circle cx="60" cy="65" r="46" fill="${face}"/>
     <ellipse cx="42" cy="74" rx="10" ry="7" fill="${cheek}" opacity=".5"/>
     <ellipse cx="78" cy="74" rx="10" ry="7" fill="${cheek}" opacity=".5"/>
-    ${eyeL}${eyeR}
-    ${beak ? '' : `<ellipse cx="60" cy="72" rx="6" ry="4" fill="${nose}"/>`}
+    ${usedEyeL}${usedEyeR}
+    ${noseEl}
     ${mouth}
-    ${extras}
-    ${state === 'celebrate' ? `<text x="10" y="20" font-size="14">⭐</text><text x="90" y="20" font-size="14">🌟</text>` : ''}
+    ${mane ? '' : extras}
+    ${state === 'celebrate' ? `<text x="8" y="20" font-size="14">⭐</text><text x="88" y="20" font-size="14">🌟</text>` : ''}
   </svg>`;
 }
 
@@ -1841,21 +2001,91 @@ if (!SpeechRecognition) {
 
 // ── Badge System ─────────────────────────────────────
 const ALL_BADGES = [
-  { id: 'first_chat',   icon: '🌟', name: 'First Question!',   desc: 'Asked your first question' },
-  { id: 'math_5',       icon: '🐯', name: 'Math Cub',          desc: 'Had 5 Math chats' },
-  { id: 'read_5',       icon: '🦉', name: 'Bookworm',          desc: 'Had 5 Reading chats' },
-  { id: 'sci_5',        icon: '🐸', name: 'Explorer',          desc: 'Had 5 Science chats' },
-  { id: 'all_subjects', icon: '🌈', name: 'All-Rounder',       desc: 'Used all 3 subjects' },
-  { id: 'streak_3',     icon: '🔥', name: '3-Day Streak',      desc: 'Learned 3 days in a row' },
-  { id: 'streak_7',     icon: '💫', name: 'Super Learner',     desc: 'Learned 7 days in a row' },
-  { id: 'quiz_first',   icon: '❓', name: 'Quiz Starter',      desc: 'Tried your first quiz' },
-  { id: 'quiz_correct', icon: '✅', name: 'Quiz Whiz',         desc: 'Got a quiz question right' },
-  { id: 'quiz_5',       icon: '🏆', name: 'Quiz Champion',     desc: 'Got 5 quiz questions right' },
-  { id: 'chats_20',     icon: '💬', name: 'Chatterbox',        desc: 'Sent 20 messages' },
-  { id: 'chats_50',     icon: '🎓', name: 'Scholar',           desc: 'Sent 50 messages' },
+  // ── 🌟 Getting Started ──
+  { id: 'first_chat',      icon: '🌟', name: 'First Step!',       desc: 'Asked your very first question',       cat: 'Getting Started' },
+  { id: 'all_subjects',    icon: '🌈', name: 'Explorer',          desc: 'Tried all 3 subjects',                 cat: 'Getting Started' },
+  { id: 'chats_20',        icon: '💬', name: 'Chatterbox',        desc: 'Sent 20 messages',                     cat: 'Getting Started' },
+  { id: 'chats_50',        icon: '🎓', name: 'Scholar',           desc: 'Sent 50 messages',                     cat: 'Getting Started' },
+  { id: 'chats_100',       icon: '🧠', name: 'Big Brain',         desc: 'Sent 100 messages',                    cat: 'Getting Started' },
+
+  // ── 🔥 Streaks ──
+  { id: 'streak_2',        icon: '✨', name: '2-Day Streak',      desc: 'Learned 2 days in a row',              cat: 'Streaks' },
+  { id: 'streak_3',        icon: '🔥', name: '3-Day Streak',      desc: 'Learned 3 days in a row',              cat: 'Streaks' },
+  { id: 'streak_7',        icon: '💫', name: 'Super Learner',     desc: 'Learned 7 days in a row',              cat: 'Streaks' },
+  { id: 'streak_14',       icon: '🌙', name: 'Two-Week Hero',     desc: 'Learned 14 days in a row',             cat: 'Streaks' },
+  { id: 'streak_30',       icon: '👑', name: 'Legend',            desc: 'Learned 30 days in a row',             cat: 'Streaks' },
+
+  // ── 🐯 Math Tiger ──
+  { id: 'math_first',      icon: '🔢', name: 'Number Cruncher',   desc: 'Started your first Math chat',         cat: 'Math Tiger 🐯' },
+  { id: 'math_10',         icon: '🐯', name: 'Math Cub',          desc: 'Had 10 Math chats',                    cat: 'Math Tiger 🐯' },
+  { id: 'math_25',         icon: '📐', name: 'Math Whiz',         desc: 'Had 25 Math chats',                    cat: 'Math Tiger 🐯' },
+  { id: 'math_lesson1',    icon: '➕', name: 'First Math Lesson', desc: 'Completed your first Math lesson',     cat: 'Math Tiger 🐯' },
+  { id: 'math_lessons_5',  icon: '✖️', name: 'Tiger Trainee',     desc: 'Completed 5 Math lessons',             cat: 'Math Tiger 🐯' },
+  { id: 'math_lessons_10', icon: '🏅', name: 'Tiger Master',      desc: 'Completed all 10 Math lessons',        cat: 'Math Tiger 🐯' },
+  { id: 'math_test_pass',  icon: '🥇', name: 'Math Test Ace',     desc: 'Scored 8+ on a Math test',             cat: 'Math Tiger 🐯' },
+  { id: 'math_perfect',    icon: '💯', name: 'Perfect Tiger',     desc: 'Got 10/10 on a Math test',             cat: 'Math Tiger 🐯' },
+
+  // ── 🦉 Reading Owl ──
+  { id: 'read_first',      icon: '📖', name: 'First Word',        desc: 'Started your first Reading chat',      cat: 'Reading Owl 🦉' },
+  { id: 'read_10',         icon: '🦉', name: 'Bookworm',          desc: 'Had 10 Reading chats',                 cat: 'Reading Owl 🦉' },
+  { id: 'read_25',         icon: '📚', name: 'Storyteller',       desc: 'Had 25 Reading chats',                 cat: 'Reading Owl 🦉' },
+  { id: 'read_lesson1',    icon: '✏️', name: 'First Reading Lesson', desc: 'Completed your first Reading lesson', cat: 'Reading Owl 🦉' },
+  { id: 'read_lessons_5',  icon: '🖊️', name: 'Owl Apprentice',   desc: 'Completed 5 Reading lessons',          cat: 'Reading Owl 🦉' },
+  { id: 'read_lessons_10', icon: '📜', name: 'Owl Scholar',       desc: 'Completed all 10 Reading lessons',     cat: 'Reading Owl 🦉' },
+  { id: 'read_test_pass',  icon: '🥇', name: 'Reading Test Ace',  desc: 'Scored 8+ on a Reading test',          cat: 'Reading Owl 🦉' },
+  { id: 'read_perfect',    icon: '💯', name: 'Perfect Owl',       desc: 'Got 10/10 on a Reading test',          cat: 'Reading Owl 🦉' },
+
+  // ── 🐸 Science Frog ──
+  { id: 'sci_first',       icon: '🔬', name: 'Curious Mind',      desc: 'Started your first Science chat',      cat: 'Science Frog 🐸' },
+  { id: 'sci_10',          icon: '🐸', name: 'Nature Explorer',   desc: 'Had 10 Science chats',                 cat: 'Science Frog 🐸' },
+  { id: 'sci_25',          icon: '🌍', name: 'Scientist',         desc: 'Had 25 Science chats',                 cat: 'Science Frog 🐸' },
+  { id: 'sci_lesson1',     icon: '🧪', name: 'First Science Lesson', desc: 'Completed your first Science lesson', cat: 'Science Frog 🐸' },
+  { id: 'sci_lessons_5',   icon: '🔭', name: 'Frog Researcher',   desc: 'Completed 5 Science lessons',          cat: 'Science Frog 🐸' },
+  { id: 'sci_lessons_10',  icon: '🧬', name: 'Frog Professor',    desc: 'Completed all 10 Science lessons',     cat: 'Science Frog 🐸' },
+  { id: 'sci_test_pass',   icon: '🥇', name: 'Science Test Ace',  desc: 'Scored 8+ on a Science test',          cat: 'Science Frog 🐸' },
+  { id: 'sci_perfect',     icon: '💯', name: 'Perfect Frog',      desc: 'Got 10/10 on a Science test',          cat: 'Science Frog 🐸' },
+
+  // ── ❓ Quizzes ──
+  { id: 'quiz_first',      icon: '❓', name: 'Quiz Starter',      desc: 'Tried your first quiz question',       cat: 'Quizzes' },
+  { id: 'quiz_correct',    icon: '✅', name: 'Quiz Whiz',         desc: 'Got your first quiz question right',   cat: 'Quizzes' },
+  { id: 'quiz_5',          icon: '🏆', name: 'Quiz Champion',     desc: 'Got 5 quiz questions right',           cat: 'Quizzes' },
+  { id: 'quiz_20',         icon: '🎯', name: 'Sharp Shooter',     desc: 'Got 20 quiz questions right',          cat: 'Quizzes' },
+  { id: 'quiz_50',         icon: '🌠', name: 'Quiz Legend',       desc: 'Got 50 quiz questions right',          cat: 'Quizzes' },
+  { id: 'test_first',      icon: '📝', name: 'Test Taker',        desc: 'Completed your first test',            cat: 'Quizzes' },
+
+  // ── 🏆 Mastery ──
+  { id: 'all_lesson1',     icon: '🎒', name: 'Lesson Starter',    desc: 'Completed a lesson in every subject',  cat: 'Mastery' },
+  { id: 'all_tests',       icon: '🎖️', name: 'Triple Tester',    desc: 'Completed a test in every subject',    cat: 'Mastery' },
+  { id: 'all_perfect',     icon: '👸', name: 'Superstar Anna!',   desc: 'Got 10/10 in all 3 subjects',          cat: 'Mastery' },
+  { id: 'all_lessons_all', icon: '🌟', name: 'All 30 Done!',      desc: 'Completed all lessons in every subject', cat: 'Mastery' },
 ];
 
 let earnedBadges = JSON.parse(localStorage.getItem('anna_badges') || '[]');
+
+// ── Badge migration — map old IDs to new ones ─────────
+// Safe to run every load; only adds, never removes.
+const BADGE_MIGRATIONS = {
+  'math_5':     ['math_first', 'math_10'],     // had 5 math chats → grant first + heading toward 10
+  'read_5':     ['read_first', 'read_10'],
+  'sci_5':      ['sci_first',  'sci_10'],
+  'lessons_5':  [],                             // generic — can't tell which subject, skip
+  'lessons_all':['math_lessons_10'],            // most likely math since it was the default subject
+  'test_ace':   ['test_first'],                 // had a test ace → definitely did first test
+  'test_first': ['test_first'],                 // already correct, keep
+};
+let migrated = false;
+earnedBadges.forEach(oldId => {
+  const newIds = BADGE_MIGRATIONS[oldId];
+  if (newIds) {
+    newIds.forEach(newId => {
+      if (!earnedBadges.includes(newId)) {
+        earnedBadges.push(newId);
+        migrated = true;
+      }
+    });
+  }
+});
+if (migrated) localStorage.setItem('anna_badges', JSON.stringify(earnedBadges));
 let chatCounts = JSON.parse(localStorage.getItem('anna_chat_counts') || '{"Math":0,"Reading & Writing":0,"Science":0,"total":0}');
 let quizCorrect = parseInt(localStorage.getItem('anna_quiz_correct') || '0');
 
@@ -1881,31 +2111,97 @@ function showBadgeToast(badge) {
 }
 
 function checkBadges() {
-  if (chatCounts.total >= 1) awardBadge('first_chat');
-  if (chatCounts['Math'] >= 5) awardBadge('math_5');
-  if (chatCounts['Reading & Writing'] >= 5) awardBadge('read_5');
-  if (chatCounts['Science'] >= 5) awardBadge('sci_5');
-  if (chatCounts['Math'] > 0 && chatCounts['Reading & Writing'] > 0 && chatCounts['Science'] > 0) awardBadge('all_subjects');
-  if (streak >= 3) awardBadge('streak_3');
-  if (streak >= 7) awardBadge('streak_7');
-  if (quizCorrect >= 1) awardBadge('quiz_correct');
-  if (quizCorrect >= 5) awardBadge('quiz_5');
+  // Getting Started
+  if (chatCounts.total >= 1)  awardBadge('first_chat');
   if (chatCounts.total >= 20) awardBadge('chats_20');
   if (chatCounts.total >= 50) awardBadge('chats_50');
+  if (chatCounts.total >= 100) awardBadge('chats_100');
+  if (chatCounts['Math'] > 0 && chatCounts['Reading & Writing'] > 0 && chatCounts['Science'] > 0) awardBadge('all_subjects');
+
+  // Streaks
+  if (streak >= 2)  awardBadge('streak_2');
+  if (streak >= 3)  awardBadge('streak_3');
+  if (streak >= 7)  awardBadge('streak_7');
+  if (streak >= 14) awardBadge('streak_14');
+  if (streak >= 30) awardBadge('streak_30');
+
+  // Math chats
+  if (chatCounts['Math'] >= 1)  awardBadge('math_first');
+  if (chatCounts['Math'] >= 10) awardBadge('math_10');
+  if (chatCounts['Math'] >= 25) awardBadge('math_25');
+
+  // Reading chats
+  if (chatCounts['Reading & Writing'] >= 1)  awardBadge('read_first');
+  if (chatCounts['Reading & Writing'] >= 10) awardBadge('read_10');
+  if (chatCounts['Reading & Writing'] >= 25) awardBadge('read_25');
+
+  // Science chats
+  if (chatCounts['Science'] >= 1)  awardBadge('sci_first');
+  if (chatCounts['Science'] >= 10) awardBadge('sci_10');
+  if (chatCounts['Science'] >= 25) awardBadge('sci_25');
+
+  // Quiz
+  if (quizCorrect >= 1)  awardBadge('quiz_correct');
+  if (quizCorrect >= 5)  awardBadge('quiz_5');
+  if (quizCorrect >= 20) awardBadge('quiz_20');
+  if (quizCorrect >= 50) awardBadge('quiz_50');
+
+  // Mastery: all-subject lesson1
+  if (earnedBadges.includes('math_lesson1') &&
+      earnedBadges.includes('read_lesson1') &&
+      earnedBadges.includes('sci_lesson1'))  awardBadge('all_lesson1');
+
+  // Mastery: all tests done
+  if (earnedBadges.includes('math_test_pass') &&
+      earnedBadges.includes('read_test_pass') &&
+      earnedBadges.includes('sci_test_pass')) awardBadge('all_tests');
+
+  // Mastery: all perfect
+  if (earnedBadges.includes('math_perfect') &&
+      earnedBadges.includes('read_perfect') &&
+      earnedBadges.includes('sci_perfect'))  awardBadge('all_perfect');
+
+  // Mastery: all 30 lessons
+  if (earnedBadges.includes('math_lessons_10') &&
+      earnedBadges.includes('read_lessons_10') &&
+      earnedBadges.includes('sci_lessons_10')) awardBadge('all_lessons_all');
 }
 
 function renderBadgesModal() {
   const grid = document.getElementById('badges-grid');
-  const sub = document.getElementById('badges-subtitle');
-  sub.textContent = `${earnedBadges.length} of ${ALL_BADGES.length} badges earned 🎉`;
+  const sub  = document.getElementById('badges-subtitle');
+  const earned = earnedBadges.length;
+  const total  = ALL_BADGES.length;
+  sub.textContent = `${earned} of ${total} badges earned 🎉`;
   grid.innerHTML = '';
+  grid.style.display = 'block'; // override grid for category layout
+
+  // Group by category
+  const cats = {};
   ALL_BADGES.forEach(b => {
-    const div = document.createElement('div');
-    const earned = earnedBadges.includes(b.id);
-    div.className = `badge-item ${earned ? 'earned' : 'locked'}`;
-    div.innerHTML = `<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div>`;
-    div.title = earned ? b.desc : '???';
-    grid.appendChild(div);
+    if (!cats[b.cat]) cats[b.cat] = [];
+    cats[b.cat].push(b);
+  });
+
+  Object.entries(cats).forEach(([cat, badges]) => {
+    // Category header
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-family:Fredoka One,cursive;font-size:.95rem;color:#92400e;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #fde68a;';
+    hdr.textContent = cat;
+    grid.appendChild(hdr);
+
+    // Badge grid for this category
+    const catGrid = document.createElement('div');
+    catGrid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;';
+    badges.forEach(b => {
+      const isEarned = earnedBadges.includes(b.id);
+      const div = document.createElement('div');
+      div.className = `badge-item ${isEarned ? 'earned' : 'locked'}`;
+      div.innerHTML = `<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div>`;
+      div.title = isEarned ? b.desc : '???';
+      catGrid.appendChild(div);
+    });
+    grid.appendChild(catGrid);
   });
 }
 
@@ -2758,9 +3054,14 @@ function markLessonDone(subject, index) {
   progress[index] = true;
   saveLessonProgress(subject, progress);
   const completedCount = progress.filter(Boolean).length;
-  if (completedCount >= 5) awardBadge('lessons_5');
-  if (completedCount === 10) awardBadge('lessons_all');
-  // Return to lesson list
+
+  // Subject-specific lesson badges
+  const pfx = subject === 'Math' ? 'math' : subject === 'Reading & Writing' ? 'read' : 'sci';
+  if (completedCount >= 1)  awardBadge(`${pfx}_lesson1`);
+  if (completedCount >= 5)  awardBadge(`${pfx}_lessons_5`);
+  if (completedCount === 10) awardBadge(`${pfx}_lessons_10`);
+
+  checkBadges(); // check mastery badges
   lessonChatEl.classList.remove('visible');
   renderLessonPanel(subject);
   lessonPanel.classList.add('visible');
@@ -2966,8 +3267,11 @@ function showTestResults() {
     <button class="test-retry-btn" id="test-back" style="background:#ede9fe;">← Back to Lessons</button>`;
   results.classList.add('show');
 
-  if (testScore >= 8) { awardBadge('test_ace'); }
+  // Subject-specific test badges
+  const pfx = testSubject === 'Math' ? 'math' : testSubject === 'Reading & Writing' ? 'read' : 'sci';
   awardBadge('test_first');
+  if (testScore >= 8)  awardBadge(`${pfx}_test_pass`);
+  if (testScore === 10) awardBadge(`${pfx}_perfect`);
   quizCorrect += testScore;
   saveQuizCorrect();
   checkBadges();
@@ -2983,15 +3287,6 @@ function showTestResults() {
 
   testPanelEl.scrollTop = testPanelEl.scrollHeight;
 }
-
-// ── Update badge list with lesson badges ─────────────
-// (add two new ones to ALL_BADGES before badges render)
-ALL_BADGES.push(
-  { id: 'lessons_5',   icon: '📖', name: '5 Lessons!',   desc: 'Completed 5 lessons' },
-  { id: 'lessons_all', icon: '🎓', name: 'All 10 Done!', desc: 'Completed all 10 daily lessons' },
-  { id: 'test_first',  icon: '📝', name: 'Test Taker',   desc: 'Completed your first test' },
-  { id: 'test_ace',    icon: '🥇', name: 'Test Ace!',    desc: 'Scored 8 or more on a test' }
-);
 
 // Re-render lessons when subject changes (if in lessons mode)
 const origPillHandler = () => {};
